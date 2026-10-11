@@ -1,8 +1,32 @@
-venv/
+# Python and Django
 __pycache__/
-*.pyc
-.env
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+ENV/
+*.sqlite3
 db.sqlite3
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Django user uploads and generated files
 media/
-staticfiles/
-.pytest_cache/
+
+# React and Node.js
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+npm-debug.log*
+
+# Editors and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.dbgit_backup/
+backend/.git-backup/

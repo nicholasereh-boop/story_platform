@@ -1,0 +1,9 @@
+# Search engines may crawl the public site, but not the admin area or the login page.
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /login
+
+# Replace YOUR-DOMAIN with the real address when you deploy. The sitemap itself is generated from
+# GET /api/v1/sitemap-data/ (see the README, "SEO approach and its limits").
+Sitemap: https://YOUR-DOMAIN/sitemap.xml
