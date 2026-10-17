@@ -9,6 +9,7 @@ from urllib.parse import unquote, urlparse
 
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 load_dotenv(BASE_DIR / ".env")
@@ -59,15 +60,12 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "apps.core.security.SecurityHeadersMiddleware",  # Permissions-Policy + Content-Security-Policy (Phase 10)
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",  # must come before CommonMiddleware
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "apps.accounts.middleware.SessionActivityMiddleware",  # staff idle timeout + session registry (Phase 10)
-    "apps.accounts.middleware.DjangoAdminMfaMiddleware",  # the built-in admin obeys the two-step rule too (Phase 10)
     "django.contrib.messages.middleware.MessageMiddleware",
     "allauth.account.middleware.AccountMiddleware",  # must come after MessageMiddleware
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -158,10 +156,9 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # --- Cookies, CSRF, CORS -----------------------------------------------------------
-SESSION_COOKIE_HTTPONLY = True  # JavaScript can never read the session
+SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"  # the CSRF cookie stays readable by JS so React can send X-CSRFToken
-CSRF_COOKIE_HTTPONLY = False  # deliberate: React reads it and sends it back in the X-CSRFToken header
 CSRF_TRUSTED_ORIGINS = [FRONTEND_URL]
 CORS_ALLOWED_ORIGINS = [FRONTEND_URL]  # ONLY the frontend may call the API from a browser
 CORS_ALLOW_CREDENTIALS = True
@@ -173,9 +170,7 @@ def _rate(scope, default):
 
 # --- Django REST Framework -----------------------------------------------------------
 REST_FRAMEWORK = {
-    # Session auth that ALSO demands the CSRF token on anonymous unsafe requests (login, sign-up, password reset),
-    # which plain SessionAuthentication skips. See apps/core/authentication.py.
-    "DEFAULT_AUTHENTICATION_CLASSES": ["apps.core.authentication.StrictSessionAuthentication"],
+    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticatedOrReadOnly"],
     "DEFAULT_PAGINATION_CLASS": "apps.core.pagination.StandardPagination",
     "PAGE_SIZE": 12,
@@ -190,7 +185,6 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
         "rest_framework.throttling.ScopedRateThrottle",  # views opt in with throttle_scope = "..."
-        "apps.core.throttles.AdminWriteThrottle",  # staff writes only (Phase 10)
     ],
     "DEFAULT_THROTTLE_RATES": {
         "anon": _rate("anon", "100/hour"),
@@ -206,15 +200,6 @@ REST_FRAMEWORK = {
         "comment": _rate("comment", "10/hour"),  # posting comments, per user (Phase 8)
         "report": _rate("report", "20/hour"),  # reporting comments, per user (Phase 8)
         "analytics": _rate("analytics", "120/min"),  # page-view events, per IP (Phase 9)
-        # --- Phase 10 ---
-        "logout": _rate("logout", "60/min"),
-        "email_verify": _rate("email_verify", "30/hour"),  # confirming an e-mail link, per IP
-        "password_change": _rate("password_change", "10/hour"),  # per user
-        "admin_write": _rate("admin_write", "300/min"),  # writes by one staff user
-        "mfa": _rate("mfa", "10/10min"),  # two-step verification attempts, per user
-        "data_export": _rate("data_export", "3/hour"),  # "download my data", per user
-        "account_delete": _rate("account_delete", "3/hour"),  # per user
-        "csp_report": _rate("csp_report", "30/min"),  # browser CSP reports, per IP
     },
     # How many reverse proxies (e.g. Nginx) sit in front of Django. 0 = trust REMOTE_ADDR only.
     # Set NUM_PROXIES=1 behind one proxy, otherwise every visitor shares the proxy's IP in throttles.
@@ -337,54 +322,3 @@ ANALYTICS_DEDUPE_MINUTES = int(os.environ.get("ANALYTICS_DEDUPE_MINUTES", "30"))
 ANALYTICS_RETENTION_DAYS = int(os.environ.get("ANALYTICS_RETENTION_DAYS", "90"))
 # Secret used to hash visitor and session ids. Empty = derived from DJANGO_SECRET_KEY.
 ANALYTICS_HASH_SECRET = os.environ.get("ANALYTICS_HASH_SECRET", "")
-
-
-# --- Security and privacy (Phase 10) --------------------------------------------------
-# Header settings read by Django's SecurityMiddleware and by apps/core/security.py.
-SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
-SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"  # "same-origin" would break the Google login popup
-X_FRAME_OPTIONS = "DENY"
-# true = browsers only REPORT Content-Security-Policy violations (use while rolling out a stricter policy).
-CSP_REPORT_ONLY = env_bool("CSP_REPORT_ONLY", False)
-
-# One-time links: password reset 1 hour, e-mail verification 3 days.
-PASSWORD_RESET_TIMEOUT = 60 * 60
-ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
-
-# The built-in Django admin lives at a path of your choice and can be switched off (recommended in production).
-DJANGO_ADMIN_URL = os.environ.get("DJANGO_ADMIN_URL", "django-admin/").strip().strip("/") + "/"
-DJANGO_ADMIN_ENABLED = env_bool("DJANGO_ADMIN_ENABLED", True)
-
-# Staff sessions end after this many minutes without a request. Everyone else keeps SESSION_COOKIE_AGE.
-STAFF_SESSION_IDLE_MINUTES = int(os.environ.get("STAFF_SESSION_IDLE_MINUTES", "120"))
-
-# Two-step verification (TOTP) for staff. Off = optional (staff who set it up are still checked).
-STAFF_MFA_REQUIRED = env_bool("STAFF_MFA_REQUIRED", False)
-MFA_ENCRYPTION_KEY = os.environ.get("MFA_ENCRYPTION_KEY", "")  # empty = derived from DJANGO_SECRET_KEY
-MFA_ISSUER = os.environ.get("MFA_ISSUER", SITE_NAME)  # the name an authenticator app shows
-
-# Audit log (apps/audit): entries older than this are removed by `manage.py purge_audit_logs` (minimum 30 days).
-AUDIT_RETENTION_DAYS = int(os.environ.get("AUDIT_RETENTION_DAYS", "365"))
-AUDIT_HASH_SECRET = os.environ.get("AUDIT_HASH_SECRET", "")  # keys the IP hash; empty = derived from DJANGO_SECRET_KEY
-
-# Uploads: at most this many files per user per hour, on top of the per-request throttle.
-MEDIA_UPLOAD_QUOTA_PER_HOUR = int(os.environ.get("MEDIA_UPLOAD_QUOTA_PER_HOUR", "100"))
-
-# Privacy: what the policy page and the consent banner say. Nothing here is a secret.
-PRIVACY_CONSENT_MODE = os.environ.get("PRIVACY_CONSENT_MODE", "notice").strip().lower()
-if PRIVACY_CONSENT_MODE not in ("notice", "opt_in", "opt_out"):
-    raise ImproperlyConfigured("PRIVACY_CONSENT_MODE must be notice, opt_in or opt_out.")
-SITE_OPERATOR_NAME = os.environ.get("SITE_OPERATOR_NAME", SITE_NAME)
-SITE_CONTACT_EMAIL = os.environ.get("SITE_CONTACT_EMAIL", "")
-PRIVACY_POLICY_DATE = os.environ.get("PRIVACY_POLICY_DATE", "")  # YYYY-MM-DD, the date the owner approved the text
-
-# Logging: every handler redacts passwords, tokens, session ids, cookies and e-mail addresses (apps/core/redaction.py).
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "filters": {"redact": {"()": "apps.core.redaction.RedactingFilter"}},
-    "formatters": {"plain": {"format": "%(asctime)s %(levelname)s %(name)s: %(message)s"}},
-    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "plain", "filters": ["redact"]}},
-    "root": {"handlers": ["console"], "level": os.environ.get("LOG_LEVEL", "INFO")},
-}

@@ -60,10 +60,10 @@ describe("RegisterPage", () => {
   });
 
   it("shows the server's field errors next to the fields", async () => {
-    auth.register.mockRejectedValue(fail({ email: ["Enter a valid email address."], password: ["This password is too common."] }));
+    auth.register.mockRejectedValue(fail({ email: ["An account with this email already exists."], password: ["This password is too common."] }));
     show(<RegisterPage />);
     fill();
-    expect(await screen.findByText("Enter a valid email address.")).toBeTruthy();
+    expect(await screen.findByText("An account with this email already exists.")).toBeTruthy();
     expect(screen.getByText("This password is too common.")).toBeTruthy();
     expect(screen.getByLabelText("Email").getAttribute("aria-invalid")).toBe("true");
   });
@@ -75,13 +75,12 @@ describe("RegisterPage", () => {
     expect((await screen.findByRole("alert")).textContent).toBe("Too many sign-ups. Try again later.");
   });
 
-  it("never logs in or reveals whether the address existed: it says to check the email", async () => {
-    auth.register.mockResolvedValue({ message: "Check your email." });
+  it("welcomes the new user and mentions the verification email", async () => {
+    auth.register.mockResolvedValue({ email: "new@example.com", is_staff: false });
     show(<RegisterPage />);
     fill();
-    expect(await screen.findByRole("heading", { name: "Check your email" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Welcome!" })).toBeTruthy();
     expect(screen.getByText("new@example.com")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Go to log in" })).toBeTruthy();
     expect(auth.register).toHaveBeenCalledWith({ email: "new@example.com", password: GOOD, display_name: "" });
   });
 

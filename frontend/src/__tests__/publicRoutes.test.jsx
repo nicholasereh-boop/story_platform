@@ -22,16 +22,6 @@ vi.mock("../api/public", () => ({
   getCategoryStories: vi.fn(), getTags: vi.fn(), searchStories: vi.fn(),
 }));
 
-// The public layout asks the server for its consent mode and the privacy page for its numbers: answer from here, never the network.
-vi.mock("../api/security", () => ({
-  getPublicConfig: vi.fn().mockResolvedValue({ site_name: "StoryBoard", consent_mode: "notice", analytics_enabled: true, contact_email: "" }),
-  getPrivacyPolicy: vi.fn().mockResolvedValue({
-    site_name: "StoryBoard", operator_name: "", contact_email: "hello@example.com", effective_date: "2026-10-01", consent_mode: "notice", analytics_enabled: true,
-    retention: { analytics_events_days: 90, analytics_visitors_days: 400, audit_log_days: 365, comment_edit_window_minutes: 15 },
-    cookies: [{ name: "sessionid", purpose: "Keeps you logged in.", duration: "14 days", necessary: true }],
-  }),
-}));
-
 import * as eng from "../api/engagement";
 import * as pub from "../api/public";
 import { routes } from "../App";

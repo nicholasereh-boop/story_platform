@@ -89,9 +89,6 @@ class CollectView(APIView):
         if not settings.ANALYTICS_ENABLED or _opted_out(request) or _is_staff(self.session_user):
             return _ignored()
         data = _payload(request)
-        # Consent mode "opt_in" (Phase 10): nothing is counted unless the browser says the visitor explicitly accepted.
-        if settings.PRIVACY_CONSENT_MODE == "opt_in" and data.get("consent") is not True:
-            return _ignored()
         parsed = tracking.classify_path(data.get("path"))
         visitor_id, session_id = data.get("visitor_id"), data.get("session_id")
         if parsed is None or not tracking.valid_id(visitor_id) or not tracking.valid_id(session_id):

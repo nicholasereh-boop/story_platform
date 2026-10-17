@@ -64,6 +64,3 @@ export const analyticsOverview = (params) => api.get("/admin/analytics/overview/
 export const analyticsDaily = (params) => api.get("/admin/analytics/daily/", { params }).then(data);
 export const analyticsStories = (params) => api.get("/admin/analytics/stories/", { params }).then(data);
 export const analyticsTraffic = (params) => api.get("/admin/analytics/traffic/", { params }).then(data);
-
-// Phase 10: security and privacy endpoints live in their own file.
-export * from "./security";

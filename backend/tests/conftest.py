@@ -48,17 +48,3 @@ def staff_client(staff):
     c = APIClient()
     c.force_authenticate(staff)
     return c
-
-
-@pytest.fixture
-def superuser(db):
-    from django.contrib.auth import get_user_model
-
-    return get_user_model().objects.create_superuser(email="boss@example.com", password=PASSWORD)
-
-
-@pytest.fixture
-def superuser_client(superuser):
-    c = APIClient()
-    c.force_authenticate(superuser)
-    return c

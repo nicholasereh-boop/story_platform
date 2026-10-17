@@ -2,7 +2,7 @@ from django.apps import AppConfig
 
 
 class AuditConfig(AppConfig):
-    """Append-only audit trail of administrative and security-relevant events (Phase 10)."""
+    """Placeholder app: models and endpoints arrive in a later roadmap phase."""
 
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.audit"

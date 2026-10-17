@@ -1,15 +1,5 @@
 import axios from "axios";
 
-export const MFA_EVENT = "sb:mfa-needed";
-const MFA_CODES = ["mfa_required", "mfa_setup_required"];
-
-// The "code" field of a 403 body, when it is one of the two-step codes (string or one-item list).
-export function mfaCodeOf(fieldErrors) {
-  const raw = fieldErrors?.code;
-  const value = Array.isArray(raw) ? raw[0] : raw;
-  return MFA_CODES.includes(value) ? value : null;
-}
-
 // Turn the server's {data, errors, message} envelope into something easy to show.
 //   err.friendly    one sentence for the user
 //   err.fieldErrors {field: ["message", ...]} for form fields
@@ -21,12 +11,6 @@ function normalizeError(err) {
     (body && typeof body.message === "string" && body.message) ||
     (err.response ? "Something went wrong. Please try again." : "Cannot reach the server. Is the backend running?");
   err.fieldErrors = body && body.errors && typeof body.errors === "object" ? body.errors : {};
-  // Two-step verification: the server answers 403 with a machine-readable code (see backend core/permissions.py).
-  err.code = mfaCodeOf(err.fieldErrors);
-  if (err.code && typeof window !== "undefined") {
-    // Tell the app (AuthContext listens) that this session needs a code or the setup screen.
-    window.dispatchEvent(new CustomEvent(MFA_EVENT, { detail: err.code }));
-  }
   return Promise.reject(err);
 }
 

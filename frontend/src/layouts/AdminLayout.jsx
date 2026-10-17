@@ -5,14 +5,12 @@ import { adminListComments } from "../api";
 import { useAuth } from "../auth/AuthContext";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
-// Every link is visible to staff; the server decides what each person may do (for example role changes are superuser-only).
+// Later phases add more links here (categories, comments, users, analytics ...).
 const LINKS = [
   { to: "/admin/stories", label: "Stories" },
   { to: "/admin/media", label: "Media" },
   { to: "/admin/comments", label: "Comments", badge: true }, // badge = number of comments waiting for approval
   { to: "/admin/analytics", label: "Analytics" },
-  { to: "/admin/users", label: "Users" },
-  { to: "/admin/audit-logs", label: "Audit log" },
 ];
 
 export default function AdminLayout() {

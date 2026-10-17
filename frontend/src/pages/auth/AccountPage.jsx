@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import SecuritySection from "../../components/account/SecuritySection";
+import { useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import TextField from "../../components/auth/TextField";
 import { useDocumentMeta } from "../../hooks/useDocumentMeta";
@@ -13,7 +12,6 @@ export default function AccountPage() {
   const { user, ready, updateProfile, resendVerification, logout } = useAuth();
   useDocumentMeta({ title: "Your account — StoryBoard", robots: "noindex, nofollow" });
   const navigate = useNavigate();
-  const location = useLocation();
   const [name, setName] = useState(user?.display_name || "");
   const [bio, setBio] = useState(user?.bio || "");
   const [errors, setErrors] = useState({});
@@ -21,11 +19,6 @@ export default function AccountPage() {
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState("");
   const [resend, setResend] = useState({ busy: false, message: "", error: "" });
-
-  // Arriving from the staff guard ("two-step verification is required"): bring the security section into view.
-  useEffect(() => {
-    if (ready && user && location.state?.section === "security") document.getElementById("security")?.scrollIntoView?.();
-  }, [ready, user, location.state]);
 
   if (!ready) return <div className="container"><p className="muted">Loading…</p></div>;
   if (!user) return <Navigate to="/login" replace state={{ from: "/account", message: "Please log in to see your account." }} />;
@@ -75,7 +68,6 @@ export default function AccountPage() {
   return (
     <div className="container account-page">
       <h1>Your account</h1>
-      {location.state?.message && <div className="notice info" role="status">{location.state.message}</div>}
       <section aria-labelledby="acct-email">
         <h2 id="acct-email">Email</h2>
         <p>{user.email} {user.email_verified ? <span className="badge published">Verified</span> : <span className="badge scheduled">Not verified</span>}</p>
@@ -105,8 +97,6 @@ export default function AccountPage() {
           <button className="btn" disabled={busy}>{busy ? "Saving…" : "Save profile"}</button>
         </form>
       </section>
-
-      <SecuritySection />
 
       <section>
         <button type="button" className="btn secondary" onClick={onLogout}>Log out</button>

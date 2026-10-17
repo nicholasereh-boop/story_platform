@@ -10,7 +10,6 @@ from rest_framework.views import APIView
 
 from apps.core.http import mark_per_user
 from apps.core.pagination import StandardPagination
-from apps.core.permissions import IsVerifiedEmail
 from apps.stories.public_views import get_public_story_or_404, public_story_filter
 
 from . import services
@@ -45,7 +44,7 @@ class StoryCommentsView(generics.ListAPIView):
 
     def get_permissions(self):
         if self.request.method == "POST":
-            return [IsAuthenticated(), IsVerifiedEmail()]  # logged in AND email verified
+            return [IsAuthenticated()]  # login required; email verification is not required
         return [AllowAny()]
 
     def get_queryset(self):

@@ -12,15 +12,12 @@ export function absoluteUrl(value, origin) {
 
 /**
  * Serialise a plain object for a <script type="application/ld+json"> tag.
- * "<", ">" and "&" are escaped as \u003c, \u003e and \u0026 so a title such as "</script><script>alert(1)" can never close the tag
- * and inject markup (the JSON stays valid and means the same thing). U+2028/2029 are escaped too (they break older JS parsers).
- * The result is only ever written with element.textContent (utils/documentMeta.js), never as HTML.
+ * "<" is escaped as \u003c so a title such as "</script><script>alert(1)" can never close the tag and inject markup
+ * (the JSON stays valid and means the same thing). U+2028/2029 are escaped too (they break older JS parsers).
  */
 export function safeJsonLd(object) {
   return JSON.stringify(object)
     .replace(/</g, "\\u003c")
-    .replace(/>/g, "\\u003e")
-    .replace(/&/g, "\\u0026")
     .replace(/\u2028/g, "\\u2028")
     .replace(/\u2029/g, "\\u2029");
 }

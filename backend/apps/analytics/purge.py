@@ -35,10 +35,6 @@ def purge(now=None, dry_run=False):
         summary["aggregated_days"] = result["days"]
         old.delete()
     stale_visitors.delete()
-    if summary["events"] or summary["visitors"]:
-        from apps.audit import service as audit  # imported here: keeps this module importable without the audit app
-
-        audit.log(None, "analytics.purge", None, events=summary["events"], visitors=summary["visitors"], cutoff=cutoff.isoformat(), aggregated_days=summary["aggregated_days"])
     previous = purged_before()
     if previous is None or cutoff > previous:
         set_purged_before(cutoff)

@@ -21,23 +21,23 @@ def login(client, email="reader@example.com", password=PASSWORD):
 
 
 # ---- registration -------------------------------------------------------------
-# Phase 10 (B1) changed this rule on purpose: register always answers 202 "check your email" and never logs anyone in,
-# so the form cannot be used to find out which addresses have an account.
-def test_register_creates_user_profile_and_sends_verification_but_does_not_log_in(client, db):
+def test_register_creates_user_profile_logs_in_and_sends_verification(client, db):
     r = client.post(URL + "register/", register_payload("New@Example.com"), format="json")
-    assert r.status_code == 202
-    assert r.json()["data"] is None and "Check your email" in r.json()["message"]
-    user = User.objects.get(email="new@example.com")
-    assert user.profile.display_name == "Nia"
-    assert client.get(URL + "me/").json()["data"] is None  # not logged in
+    assert r.status_code == 201
+    data = r.json()["data"]
+    assert data["email"] == "new@example.com"
+    assert data["display_name"] == "Nia"
+    assert data["email_verified"] is False
+    assert "password" not in data and "is_superuser" not in data
+    assert User.objects.get(email="new@example.com").profile.display_name == "Nia"
+    assert client.get(URL + "me/").json()["data"]["email"] == "new@example.com"  # logged in
     assert len(mail.outbox) >= 1
 
 
-def test_duplicate_email_with_different_case_creates_nothing_and_looks_the_same(client, user):
+def test_duplicate_email_with_different_case_is_rejected(client, user):
     r = client.post(URL + "register/", register_payload("READER@example.com"), format="json")
-    assert r.status_code == 202
-    assert User.objects.filter(email__iexact="reader@example.com").count() == 1
-    assert any(m.to == ["reader@example.com"] for m in mail.outbox)  # the owner gets a notice instead
+    assert r.status_code == 400
+    assert "email" in r.json()["errors"]
 
 
 def test_database_rejects_case_insensitive_duplicates(db):
@@ -67,7 +67,7 @@ def test_register_cannot_create_staff(client, db):
 def test_register_is_rate_limited(db):
     for i in range(10):
         r = APIClient().post(URL + "register/", register_payload(f"user{i}@example.com"), format="json")
-        assert r.status_code == 202
+        assert r.status_code == 201
     r = APIClient().post(URL + "register/", register_payload("one-too-many@example.com"), format="json")
     assert r.status_code == 429
     assert r.json()["data"] is None and "message" in r.json()
@@ -196,7 +196,6 @@ def test_email_verification_flow(client, db):
     key = re.search(r"verify-email\?key=([^\s&]+)", body).group(1)
     r = APIClient().post(URL + "email/verify/", {"key": key}, format="json")
     assert r.status_code == 200
-    assert login(client, "verify@example.com").status_code == 200  # registering does not log in: do it now
     assert client.get(URL + "me/").json()["data"]["email_verified"] is True
 
 

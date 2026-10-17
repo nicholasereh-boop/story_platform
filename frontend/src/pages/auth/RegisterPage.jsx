@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import AuthCard from "../../components/auth/AuthCard";
 import GoogleButton from "../../components/auth/GoogleButton";
@@ -8,37 +8,33 @@ import TextField from "../../components/auth/TextField";
 import { useDocumentMeta } from "../../hooks/useDocumentMeta";
 import { fieldMessage } from "../../utils/format";
 import { MIN_PASSWORD_LENGTH, passwordProblem } from "../../utils/password";
-import { afterLoginPath, safeFrom } from "../../utils/redirect";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Reader sign-up. Client checks mirror the server's rules; whatever the server still rejects is shown on its field.
 export default function RegisterPage() {
   const { user, ready, register } = useAuth();
+  const navigate = useNavigate();
   useDocumentMeta({ title: "Sign up — StoryBoard", robots: "noindex, nofollow" });
   const location = useLocation();
-  const from = safeFrom(location.state?.from);
   const [form, setForm] = useState({ email: "", display_name: "", password: "", confirm: "" });
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [sentTo, setSentTo] = useState(""); // the address we answered for (the answer is the same whether or not it was already registered)
+  const [created, setCreated] = useState(null); // the new user, once sign-up worked
 
   const set = (name) => (value) => setForm((f) => ({ ...f, [name]: value }));
 
-  if (ready && user && !sentTo) return <Navigate to={afterLoginPath(user, from)} replace />;
+  // (not while submitting: register() logs the user in before we get to show the welcome screen)
+  if (ready && user && !created && !busy) return <Navigate to="/" replace />;
 
-  // Sign-up does not log anyone in and never reveals whether the address already had an account (no account enumeration).
-  if (sentTo) {
+  if (created) {
     return (
-      <AuthCard title="Check your email">
+      <AuthCard title="Welcome!">
         <div className="notice info" role="status">
-          <p>
-            If <strong>{sentTo}</strong> can be used for a new account, we have sent a message with the next steps. Open the link in it to
-            verify your address, then log in. If you already have an account, you can log in or reset your password instead.
-          </p>
+          <p>Your account is ready. You are signed in and can continue reading and commenting without email verification.</p>
         </div>
-        <Link className="btn block" to="/login" state={location.state}>Go to log in</Link>
+        <Link className="btn block" to="/">Continue to stories</Link>
       </AuthCard>
     );
   }
@@ -62,7 +58,7 @@ export default function RegisterPage() {
     setBusy(true);
     try {
       await register({ email: form.email.trim(), password: form.password, display_name: form.display_name.trim() });
-      setSentTo(form.email.trim());
+      navigate("/", { replace: true });
     } catch (err) {
       const server = {};
       for (const name of ["email", "password", "display_name"]) {

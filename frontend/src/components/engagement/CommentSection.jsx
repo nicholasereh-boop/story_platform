@@ -47,15 +47,11 @@ export default function CommentSection({ slug, count = 0 }) {
         </div>
       )}
 
-      {user && !user.email_verified && (
-        <div className="notice info">
-          <p>Verify your email to comment.</p>
-          <button type="button" className="btn secondary small" disabled={resend.busy} onClick={sendVerification}>
-            {resend.busy ? "Sending…" : "Resend verification email"}
-          </button>
-          {resend.message && <p className="small" role="status">{resend.message}</p>}
-          {resend.error && <p className="field-error" role="alert">{resend.error}</p>}
-        </div>
+            {user && (
+        <>
+          {notice && <div className="notice info" role="status">{notice}</div>}
+          <CommentForm onSubmit={post} />
+        </>
       )}
 
       {user?.email_verified && (

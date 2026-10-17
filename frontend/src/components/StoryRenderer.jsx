@@ -94,10 +94,9 @@ function renderNode(node, key) {
       return (
         <div key={key} className="yt-embed">
           <iframe
-            src={youtubeEmbedUrl(id)}
+            src={youtubeEmbedUrl(id, { autoplay: true })}
             title="YouTube video"
-            loading="lazy"
-            allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+            allow="autoplay; accelerometer; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             referrerPolicy="strict-origin-when-cross-origin"
           />

@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import * as API from "../api";
-import { MFA_EVENT, ensureCsrf } from "../api/client";
+import { ensureCsrf } from "../api/client";
 
 const AuthContext = createContext(null);
 
@@ -30,20 +30,6 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // The server said 403 mfa_required / mfa_setup_required (for example the two-step proof expired): reload the user so the
-  // admin guard shows the code prompt or the setup screen.
-  useEffect(() => {
-    const onNeeded = async () => {
-      try {
-        setUser(await API.me());
-      } catch {
-        /* keep the current user; the next request will tell */
-      }
-    };
-    window.addEventListener(MFA_EVENT, onNeeded);
-    return () => window.removeEventListener(MFA_EVENT, onNeeded);
-  }, []);
-
   const value = useMemo(() => {
     // After the session changes (login, sign-up, logout) cached answers belong to the previous visitor.
     const startSession = (next) => {
@@ -56,15 +42,8 @@ export function AuthProvider({ children }) {
       ready,
       isStaff: Boolean(user?.is_staff),
       login: async (email, password) => startSession(await API.login({ email, password })),
-      // Sign-up never logs anybody in and never says whether the address was already taken (no account enumeration):
-      // the answer is always "check your email". The person logs in afterwards.
-      register: ({ email, password, display_name }) => API.register({ email, password, display_name }),
-      // Reload the user from the server (after a two-step code, MFA setup or a security change).
-      refreshUser: async () => {
-        const current = await API.me();
-        setUser(current);
-        return current;
-      },
+      // The server creates the account AND logs the new user in.
+      register: async ({ email, password, display_name }) => startSession(await API.register({ email, password, display_name })),
       logout: async () => {
         try {
           await API.logout();
