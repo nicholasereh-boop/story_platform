@@ -1,7 +1,7 @@
 /* One stylesheet, CSS variables for the look. Sections: base, layout, forms, tables, media, editor, story (reader), dialogs. */
 
 :root {
-  --bg: #ffffff;
+  --bg: #f6f4ef;
   --surface: #ffffff;
   --ink: #1f2430;
   --muted: #5d6475;
@@ -82,12 +82,6 @@ input[type="text"], input[type="email"], input[type="password"], input[type="sea
   width: 100%; font: inherit; padding: 0.5rem 0.65rem; border: 1px solid #b9b3a6; border-radius: var(--radius); background: #fff; color: var(--ink);
 }
 textarea { resize: vertical; }
-.password-input-wrap { position: relative; display: flex; align-items: stretch; }
-.password-input-wrap input { min-width: 0; padding-right: 4.5rem; }
-.password-toggle { position: absolute; right: 0.35rem; top: 50%; transform: translateY(-50%); border: 0; border-radius: 0.35rem; padding: 0.3rem 0.55rem; background: transparent; color: var(--ink); font: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
-.password-toggle:hover { background: rgba(0, 0, 0, 0.06); }
-.password-toggle:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-
 input[aria-invalid="true"] { border-color: var(--danger); }
 .switch { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; }
 .check-list { list-style: none; margin: 0; padding: 0; max-height: 11rem; overflow: auto; }
@@ -227,7 +221,7 @@ input[aria-invalid="true"] { border-color: var(--danger); }
 .prose::after { content: ""; display: block; clear: both; }
 @media (max-width: 600px) { .img-left, .img-right { float: none; margin-left: auto; margin-right: auto; width: 100%; } }
 
-.yt-embed { position: relative; width: 100%; aspect-ratio: 16 / 9; margin: 1.5em 0; background: #000; border-radius: 4px; overflow: hidden; clear: both; }
+.yt-embed { position: relative; width: 100%; max-width: 560px; aspect-ratio: 16 / 9; margin: 1.5em auto; background: #000; border-radius: 4px; overflow: hidden; clear: both; }
 .yt-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
 .preview-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; padding: 0.6rem 0.9rem; background: #fbeccc; border: 1px solid #ecd49a; border-radius: var(--radius); margin-bottom: 1.25rem; }
@@ -452,12 +446,58 @@ a.chip:hover { background: #ead3cf; }
 .bar-value { text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 480px) { .bar-list li { grid-template-columns: 1fr auto; } .bar-track { display: none; } }
 
+/* ---------- Phase 10: security and privacy ---------- */
+.notice.warn { background: #fbeccc; border-color: #e8cd8a; color: #5c3b00; font-size: inherit; margin: 0 0 0.9rem; }
+.block { display: block; }
+.nowrap { white-space: nowrap; }
+.stack > * { margin-top: 0; margin-bottom: 0.9rem; }
+.check { display: flex; gap: 0.5rem; align-items: center; font-weight: 600; margin-bottom: 0.9rem; }
+.badge.role-superuser { background: #e4dcf5; color: #3f2a7a; }
+.badge.role-staff { background: #d9e8fb; color: #17407a; }
+.badge.role-reader { background: #e8e6df; color: var(--ink); }
 
+/* consent banner: a region at the bottom of the page, never a modal */
+.consent-banner { position: fixed; left: 0.75rem; right: 0.75rem; bottom: 0.75rem; z-index: 40; max-width: 46rem; margin-inline: auto; background: var(--surface); border: 2px solid var(--ink); border-radius: var(--radius); padding: 0.9rem 1.1rem; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); }
+.consent-banner h2 { margin: 0 0 0.3rem; font-size: 1.05rem; }
+.consent-banner p { margin: 0 0 0.7rem; }
+.consent-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.consent-actions .btn { min-width: 8rem; } /* Accept and Reject are the same size and style on purpose */
 
+.policy-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 0.5rem 0 1.2rem; }
+.policy-table caption { text-align: left; font-weight: 700; padding-bottom: 0.3rem; }
+.policy-table th, .policy-table td { padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.policy-table th { background: #faf8f3; font-size: 0.78rem; text-transform: uppercase; color: var(--muted); }
 
+.security-section .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.9rem 1.1rem; margin-bottom: 1rem; }
+.security-section h3 { margin-top: 0; }
+.secret { display: inline-block; margin: 0.3rem 0; padding: 0.3rem 0.5rem; background: #f1efe8; border-radius: 6px; font-size: 1.05rem; letter-spacing: 0.08em; overflow-wrap: anywhere; }
+.code-list { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.4rem; padding: 0; margin: 0.6rem 0; }
+.code-list li { background: #f1efe8; border-radius: 6px; padding: 0.35rem 0.5rem; text-align: center; }
+.session-list { list-style: none; padding: 0; margin: 0 0 0.8rem; }
+.session-list li { padding: 0.45rem 0; border-top: 1px solid var(--line); }
+.session-list li:first-child { border-top: 0; }
 
+.filters { align-items: flex-end; flex-wrap: wrap; }
+.filters .field { margin-bottom: 0; }
+.users-table .user-name { font-weight: 600; }
+.meta-list { margin: 0; display: grid; gap: 0.15rem; font-size: 0.85rem; }
+.meta-list div { display: flex; gap: 0.4rem; }
+.meta-list dt { color: var(--muted); text-transform: capitalize; }
+.meta-list dt::after { content: ":"; }
+.meta-list dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 480px) { .consent-banner { left: 0.4rem; right: 0.4rem; bottom: 0.4rem; } .consent-actions .btn { flex: 1; } }
 
-/* ---------- mobile responsiveness (phones and small tablets) ---------- */
+/* ---------- story editor: category picker ---------- */
+.category-list { list-style: none; margin: 0 0 0.6rem; padding: 0; max-height: 11rem; overflow: auto; }
+.category-row { display: flex; gap: 0.5rem; align-items: center; padding: 0.35rem 0.25rem; cursor: pointer; border-radius: var(--radius); }
+.category-row:hover { background: rgba(0, 0, 0, 0.05); }
+.category-row input { width: 1.1rem; height: 1.1rem; margin: 0; cursor: pointer; flex: none; }
+.category-add { border-top: 1px solid var(--line); padding-top: 0.6rem; }
+.category-add .row { gap: 0.4rem; margin-top: 0.25rem; }
+.category-add input[type="text"] { flex: 1; min-width: 0; }
+
+/* ---------- mobile responsiveness (phones and small tablets) ----------
+   Added last on purpose: it only overrides what needs to change on small screens. Desktop looks the same. */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { overflow-wrap: break-word; }
 img, video, svg, canvas, iframe { max-width: 100%; }
@@ -530,11 +570,11 @@ pre { overflow-x: auto; }
   .tabs button { padding: 0.35rem 0.6rem; }
 }
 
-/* Touch screens: bigger tap targets */
+/* Touch screens: bigger tap targets, and no hover-only effects */
 @media (pointer: coarse) {
   .btn, .tabs button, .tb-btn, .site-menu nav a, .user-menu-list a, .user-menu-list button, .category-row { min-height: 2.75rem; }
   .tb-btn { min-width: 2.75rem; }
   .btn.small { min-height: 2.5rem; }
   input[type="checkbox"], input[type="radio"] { width: 1.25rem; height: 1.25rem; }
-  input[type="text"], input[type="email"], input[type="password"], input[type="search"], input[type="datetime-local"], select, textarea { font-size: 16px; } /* stops iOS zooming on focus */
+  input[type="text"], input[type="email"], input[type="password"], input[type="search"], input[type="datetime-local"], select, textarea { font-size: 16px; } /* stops iOS zooming in on focus */
 }

@@ -61,7 +61,7 @@ describe("signup prompt rules (pure functions)", () => {
   });
 
   it("never allows the prompt on auth pages or the admin", () => {
-    for (const path of ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/admin", "/admin/comments"]) {
+    for (const path of ["/login", "/register", "/forgot-password", "/reset-password", "/admin", "/admin/comments"]) {
       expect(isBlockedPath(path), path).toBe(true);
     }
     for (const path of ["/", "/stories/login-tips", "/account", "/administration"]) expect(isBlockedPath(path), path).toBe(false);
@@ -133,7 +133,7 @@ describe("SignupPromptProvider", () => {
   });
 
   it("never opens on auth pages or the admin, not even for an explicit click", () => {
-    for (const path of ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/admin/comments"]) {
+    for (const path of ["/login", "/register", "/forgot-password", "/reset-password", "/admin/comments"]) {
       const { unmount } = show(path, <><Probe reason="read" /><Probe reason="like" /></>);
       click("read");
       click("like");

@@ -9,4 +9,5 @@ urlpatterns = [
     path("", include("apps.reactions.urls")),
     path("", include("apps.comments.urls")),
     path("", include("apps.analytics.urls")),
+    path("", include("apps.audit.urls")),
 ]

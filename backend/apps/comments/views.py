@@ -44,7 +44,7 @@ class StoryCommentsView(generics.ListAPIView):
 
     def get_permissions(self):
         if self.request.method == "POST":
-            return [IsAuthenticated()]  # login required; email verification is not required
+            return [IsAuthenticated()]  # any logged-in reader can comment; no email verification needed
         return [AllowAny()]
 
     def get_queryset(self):

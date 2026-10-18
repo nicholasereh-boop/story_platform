@@ -11,8 +11,8 @@ import RequireStaff from "../auth/RequireStaff";
 import LoginPage from "../pages/LoginPage";
 import { afterLoginPath, safeFrom } from "../utils/redirect";
 
-const reader = { email: "r@example.com", is_staff: false, email_verified: true };
-const staff = { email: "s@example.com", is_staff: true, email_verified: true };
+const reader = { email: "r@example.com", is_staff: false };
+const staff = { email: "s@example.com", is_staff: true };
 
 function show(entry) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });

@@ -43,7 +43,6 @@ def test_only_staff_can_use_the_detail_and_action_routes(client, user, reader):
         assert c.get(f"{URL}{reader.pk}/").status_code in (401, 403)
         assert c.patch(f"{URL}{reader.pk}/", {"is_active": False}, format="json").status_code in (401, 403)
         assert c.post(f"{URL}{reader.pk}/revoke-sessions/").status_code in (401, 403)
-        assert c.post(f"{URL}{reader.pk}/resend-verification/").status_code in (401, 403)
 
 
 def test_methods_that_do_not_exist_are_refused(staff_client, reader):
@@ -62,15 +61,15 @@ def test_list_shape_and_counts(staff_client, reader):
     r = staff_client.get(URL, {"q": "someone@"})
     assert r.status_code == 200
     row = r.json()["data"][0]
-    assert set(row) >= {"id", "email", "display_name", "role", "is_active", "email_verified", "date_joined", "last_login",
+    assert set(row) >= {"id", "email", "display_name", "role", "is_active", "date_joined", "last_login",
                         "comment_count", "like_count", "mfa_enabled"}
     assert row["role"] == "reader" and row["comment_count"] == 1 and row["like_count"] == 1
-    assert row["email_verified"] is True and row["mfa_enabled"] is False
+    assert row["mfa_enabled"] is False
     assert r.json()["pagination"]["count"] == 1
 
 
 def test_filters(staff_client, staff, superuser, reader):
-    unverified = make_user("unverified@example.com", verified=False)
+    unverified = make_user("unverified@example.com")
     gone = make_user("gone@example.com")
     gone.is_active = False
     gone.save()
@@ -83,7 +82,6 @@ def test_filters(staff_client, staff, superuser, reader):
     assert "someone@example.com" in emails(role="reader") and "staff@example.com" not in emails(role="reader")
     assert emails(active="0") == {"gone@example.com"}
     assert "gone@example.com" not in emails(active="1")
-    assert emails(verified="0") >= {"unverified@example.com"} and "someone@example.com" not in emails(verified="0")
     assert emails(q="UNVERIFIED") == {"unverified@example.com"}
     assert staff_client.get(URL, {"role": "wizard"}).status_code == 400
 
@@ -156,7 +154,6 @@ def test_staff_cannot_grant_or_remove_the_staff_role(staff_client, superuser_cli
 def test_staff_cannot_touch_superusers(staff_client, superuser):
     assert patch(staff_client, superuser, is_active=False).status_code == 403
     assert staff_client.post(f"{URL}{superuser.pk}/revoke-sessions/").status_code == 403
-    assert staff_client.post(f"{URL}{superuser.pk}/resend-verification/").status_code == 403
     superuser.refresh_from_db()
     assert superuser.is_active
 
@@ -213,24 +210,6 @@ def test_revoke_sessions_endpoint(staff_client, reader):
     r = staff_client.post(f"{URL}{reader.pk}/revoke-sessions/")
     assert r.status_code == 200 and r.json()["data"]["ended"] == 2
     assert a.get("/api/v1/auth/me/").json()["data"] is None and b.get("/api/v1/auth/me/").json()["data"] is None
-
-
-def test_resend_verification(staff_client, mailoutbox):
-    unverified = make_user("unverified@example.com", verified=False)
-    r = staff_client.post(f"{URL}{unverified.pk}/resend-verification/")
-    assert r.status_code == 200 and r.json()["data"]["sent"] is True
-    assert len(mailoutbox) == 1 and mailoutbox[0].to == ["unverified@example.com"]
-    verified = make_user("verified@example.com")
-    r = staff_client.post(f"{URL}{verified.pk}/resend-verification/")
-    assert r.status_code == 200 and r.json()["data"]["sent"] is False
-    assert len(mailoutbox) == 1
-
-
-def test_resend_is_refused_for_inactive_accounts(staff_client):
-    gone = make_user("gone@example.com", verified=False)
-    gone.is_active = False
-    gone.save()
-    assert staff_client.post(f"{URL}{gone.pk}/resend-verification/").status_code == 400
 
 
 def test_changes_are_audited_with_the_old_and_new_values(staff_client, reader):

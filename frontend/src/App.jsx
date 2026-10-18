@@ -8,13 +8,14 @@ import AccountPage from "./pages/auth/AccountPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
-import VerifyEmailPage from "./pages/auth/VerifyEmailPage";
 import StoryListPage from "./pages/admin/StoryListPage";
 import StoryEditPage from "./pages/admin/StoryEditPage";
 import StoryPreviewPage from "./pages/admin/StoryPreviewPage";
 import MediaPage from "./pages/admin/MediaPage";
 import CommentsPage from "./pages/admin/CommentsPage";
 import AnalyticsPage from "./pages/admin/AnalyticsPage";
+import AuditLogsPage from "./pages/admin/AuditLogsPage";
+import UsersPage from "./pages/admin/UsersPage";
 import HomePage from "./pages/public/HomePage";
 import PrivacyPage from "./pages/public/PrivacyPage";
 import PublicNotFound from "./pages/public/PublicNotFound";
@@ -43,7 +44,6 @@ export const routes = [
       { path: "/register", element: <RegisterPage /> },
       { path: "/forgot-password", element: <ForgotPasswordPage /> },
       { path: "/reset-password", element: <ResetPasswordPage /> },
-      { path: "/verify-email", element: <VerifyEmailPage /> },
       {
         path: "/admin",
         element: (
@@ -60,6 +60,8 @@ export const routes = [
           { path: "media", element: <MediaPage /> },
           { path: "comments", element: <CommentsPage /> },
           { path: "analytics", element: <AnalyticsPage /> },
+          { path: "users", element: <UsersPage /> },
+          { path: "audit-logs", element: <AuditLogsPage /> },
         ],
       },
       // The public website. Everything that is not /login or /admin lands here (unknown addresses get the public 404).

@@ -42,11 +42,8 @@ export default function UserMenu() {
   const name = user.display_name || user.email.split("@")[0];
   const onLogout = async () => {
     setOpen(false);
-    try {
-      await logout();
-    } finally {
-      navigate("/", { replace: true });
-    }
+    await logout();
+    navigate("/", { replace: true });
   };
 
   return (

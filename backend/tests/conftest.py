@@ -15,6 +15,13 @@ def local_cache(settings):
 PASSWORD = "Correct-horse-battery-9"
 
 
+@pytest.fixture(autouse=True)
+def no_celery_broker(monkeypatch):
+    """Publishing queues a "new story" email job. Tests have no Redis, so the queueing call is a no-op unless a test replaces it."""
+    monkeypatch.setattr("apps.stories.views.queue_new_story_email", lambda story_id: None)
+    monkeypatch.setattr("apps.stories.services.queue_new_story_email", lambda story_id: None)
+
+
 @pytest.fixture
 def password():
     return PASSWORD
@@ -47,4 +54,18 @@ def register_payload(email="new@example.com", **extra):
 def staff_client(staff):
     c = APIClient()
     c.force_authenticate(staff)
+    return c
+
+
+@pytest.fixture
+def superuser(db):
+    from django.contrib.auth import get_user_model
+
+    return get_user_model().objects.create_superuser(email="boss@example.com", password=PASSWORD)
+
+
+@pytest.fixture
+def superuser_client(superuser):
+    c = APIClient()
+    c.force_authenticate(superuser)
     return c

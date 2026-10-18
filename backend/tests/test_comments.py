@@ -21,7 +21,7 @@ pytestmark = pytest.mark.django_db
 
 
 # ---------------------------------------------------------------- posting
-def test_verified_user_can_comment_and_count_updates():
+def test_member_can_comment_and_count_updates():
     story, user = make_story(), make_user()
     r = post_comment(client_for(user), story, "Lovely ending")
     assert r.status_code == 201
@@ -29,13 +29,15 @@ def test_verified_user_can_comment_and_count_updates():
     assert data["body"] == "Lovely ending" and data["status"] == "approved" and data["is_mine"] is True
     assert reload_counts(story)[1] == 1
 
-def test_unverified_user_can_comment_but_anonymous_cannot():
+
+def test_member_can_comment_but_anonymous_cannot():
     story = make_story()
-    unverified = post_comment(client_for(make_user("u@example.com", verified=False)), story)
-    assert unverified.status_code == 201
+    member = post_comment(client_for(make_user("u@example.com")), story)
+    assert member.status_code == 201
     anon = post_comment(client_for(), story)
     assert anon.status_code in (401, 403)
     assert Comment.objects.count() == 1
+
 
 def test_cannot_comment_on_non_public_story():
     user = make_user()

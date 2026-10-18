@@ -1,5 +1,6 @@
 """Small account helpers shared by views, adapters and signals."""
-from allauth.account.models import EmailAddress
+from django.conf import settings
+from django.core.mail import send_mail
 
 from .models import Profile
 
@@ -13,17 +14,24 @@ def get_profile(user):
     return profile
 
 
-def is_email_verified(user):
-    return EmailAddress.objects.filter(user=user, email__iexact=user.email, verified=True).exists()
-
-
-def send_verification_email(request, user, signup=False):
-    """Create/refresh the allauth EmailAddress and email a confirmation link. Returns False if already verified."""
-    address, _ = EmailAddress.objects.get_or_create(user=user, email=user.email, defaults={"primary": True, "verified": False})
-    if address.verified:
+def send_welcome_email(user):
+    """A short welcome message to a brand-new member. Never raises: a mail outage must not break sign-up."""
+    name = get_profile(user).display_name or "there"
+    try:
+        send_mail(
+            f"Welcome to {settings.SITE_NAME}!",
+            f"Hi {name},\n\n"
+            f"Welcome to {settings.SITE_NAME}. Your account is ready: you can like stories and join the discussion.\n\n"
+            f"Log in any time at {settings.FRONTEND_URL}/login .\n\n"
+            "Whenever a new story is published we will email it to you. You can turn those emails off "
+            "from your account page.\n\n"
+            f"Happy reading,\nThe {settings.SITE_NAME} team",
+            None,
+            [user.email],
+        )
+        return True
+    except Exception:
         return False
-    address.send_confirmation(request, signup=signup)
-    return True
 
 
 def fill_profile_from_google(user, extra):

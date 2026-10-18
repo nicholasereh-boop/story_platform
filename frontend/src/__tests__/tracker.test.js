@@ -21,7 +21,7 @@ afterEach(() => {
 
 describe("which pages are tracked", () => {
   it("never tracks the admin, auth pages or the account page", () => {
-    for (const p of ["/admin", "/admin/stories", "/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/account"]) {
+    for (const p of ["/admin", "/admin/stories", "/login", "/register", "/forgot-password", "/reset-password", "/account"]) {
       expect(t.isExcludedPath(p), p).toBe(true);
     }
   });

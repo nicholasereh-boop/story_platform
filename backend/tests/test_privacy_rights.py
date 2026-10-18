@@ -295,14 +295,11 @@ def test_login_gives_one_message_for_every_failure(client, db):
     assert len(answers) == 1
 
 
-def test_reset_and_resend_do_not_reveal_accounts(client, db):
+def test_reset_does_not_reveal_accounts(client, db):
     make_user("real@example.com")
     a = client.post("/api/v1/auth/password/reset/", {"email": "real@example.com"}, format="json")
     b = client.post("/api/v1/auth/password/reset/", {"email": "nobody@example.com"}, format="json")
     assert (a.status_code, a.json()) == (b.status_code, b.json())
-    a = client.post("/api/v1/auth/email/resend/", {"email": "real@example.com"}, format="json")
-    b = client.post("/api/v1/auth/email/resend/", {"email": "nobody@example.com"}, format="json")
-    assert a.status_code == b.status_code and a.json().get("message") == b.json().get("message")
 
 
 # ---- consent mode in the collector ---------------------------------------------------

@@ -9,31 +9,19 @@ import CommentList from "./CommentList";
 
 // "Comments" block of the story page. What the reader sees at the top depends on who they are:
 //   visitor          -> "Log in to join the discussion" (+ a button that opens the signup prompt)
-//   unverified user  -> "Verify your email to comment" + Resend
-//   verified user    -> the comment form
+//   logged-in user   -> the comment form (no email verification is needed)
 export default function CommentSection({ slug, count = 0 }) {
-  const { user, ready, resendVerification } = useAuth() || {};
+  const { user, ready } = useAuth() || {};
   const { request } = useSignupPrompt();
   const location = useLocation();
   const queryClient = useQueryClient();
   const [notice, setNotice] = useState("");
-  const [resend, setResend] = useState({ busy: false, message: "", error: "" });
 
   const post = async (text) => {
     const created = await createComment(slug, text);
     setNotice(created.status === "pending" ? "Thanks! Your comment is waiting for approval and only you can see it for now." : "");
     queryClient.invalidateQueries({ queryKey: ["comments", slug] });
     queryClient.invalidateQueries({ queryKey: ["public", "story", slug] });
-  };
-
-  const sendVerification = async () => {
-    setResend({ busy: true, message: "", error: "" });
-    try {
-      const result = await resendVerification();
-      setResend({ busy: false, message: result?.message || "Verification email sent.", error: "" });
-    } catch (err) {
-      setResend({ busy: false, message: "", error: err.friendly });
-    }
   };
 
   return (
@@ -47,14 +35,7 @@ export default function CommentSection({ slug, count = 0 }) {
         </div>
       )}
 
-            {user && (
-        <>
-          {notice && <div className="notice info" role="status">{notice}</div>}
-          <CommentForm onSubmit={post} />
-        </>
-      )}
-
-      {user?.email_verified && (
+      {user && (
         <>
           {notice && <div className="notice info" role="status">{notice}</div>}
           <CommentForm onSubmit={post} />

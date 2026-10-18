@@ -19,7 +19,7 @@ from apps.reactions.services import unlike_story
 
 from . import mfa, sessions
 from .models import User
-from .services import get_profile, is_email_verified
+from .services import get_profile
 
 DELETED_NAME = "Deleted user"
 DELETED_DOMAIN = "invalid.invalid"
@@ -46,11 +46,10 @@ def export_data(user):
             "email": user.email,
             "date_joined": user.date_joined,
             "last_login": user.last_login,
-            "email_verified": is_email_verified(user),
             "is_staff": user.is_staff,
             "sign_in_methods": ["password"] * bool(user.has_usable_password()) + [a.provider for a in SocialAccount.objects.filter(user=user)],
         },
-        "profile": {"display_name": profile.display_name, "bio": profile.bio, "avatar_url": profile.avatar_url},
+        "profile": {"display_name": profile.display_name, "bio": profile.bio, "avatar_url": profile.avatar_url, "email_new_stories": profile.email_new_stories},
         "comments": [
             {
                 "id": c.pk,

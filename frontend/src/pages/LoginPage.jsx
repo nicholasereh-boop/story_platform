@@ -6,6 +6,7 @@ import GoogleButton from "../components/auth/GoogleButton";
 import PasswordField from "../components/auth/PasswordField";
 import TextField from "../components/auth/TextField";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
+import { afterLoginPath } from "../utils/redirect";
 
 // One login page for everybody. After logging in, staff go back to where they came from (or the admin) and
 // readers go back to where they came from (or the home page). The /admin guard still bounces non-staff.
@@ -24,16 +25,16 @@ export default function LoginPage() {
   const message = location.state?.message;
   const googleFailed = params.get("error") === "google";
 
-  // Everyone returns to the public story board/home after login.
-  if (ready && user) return <Navigate to="/" replace />;
+  // Already logged in (any account type): nothing to do here.
+  if (ready && user) return <Navigate to={afterLoginPath(user, from)} replace />;
 
   const submit = async (event) => {
     event.preventDefault();
     setBusy(true);
     setError("");
     try {
-      await login(email.trim(), password);
-      navigate("/", { replace: true });
+      const loggedIn = await login(email.trim(), password);
+      navigate(afterLoginPath(loggedIn, from), { replace: true });
     } catch (err) {
       setError(err.friendly);
     } finally {

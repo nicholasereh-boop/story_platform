@@ -1,4 +1,5 @@
 """Staff-only moderation API, mounted under /api/v1/admin/. Every view requires IsStaffUser."""
+from django.db import transaction
 from django.db.models import Count, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -6,6 +7,7 @@ from rest_framework import generics, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.audit import service as audit
 from apps.core.permissions import IsStaffUser
 
 from . import services
@@ -56,7 +58,11 @@ class AdminCommentDetailView(APIView):
         comment = get_object_or_404(Comment, pk=pk)
         serializer = AdminStatusSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        services.set_status(comment, serializer.validated_data["status"])
+        old_status = comment.status
+        with transaction.atomic():
+            services.set_status(comment, serializer.validated_data["status"])
+            if comment.status != old_status:
+                audit.log(request, "comment.status", comment, status_from=old_status, status_to=comment.status, story_id=comment.story_id)
         fresh = with_report_count(Comment.objects.select_related("story", "user__profile")).get(pk=pk)
         return Response(AdminCommentSerializer(fresh).data)
 
@@ -80,7 +86,9 @@ class AdminDismissReportsView(APIView):
 
     def post(self, request, pk):
         comment = get_object_or_404(Comment, pk=pk)
-        removed, _ = CommentReport.objects.filter(comment=comment).delete()
+        with transaction.atomic():
+            removed, _ = CommentReport.objects.filter(comment=comment).delete()
+            audit.log(request, "comment.reports_dismissed", comment, dismissed=removed, story_id=comment.story_id)
         return Response({"dismissed": removed})
 
 
@@ -96,5 +104,9 @@ class AdminCommentSettingsView(APIView):
     def patch(self, request):
         serializer = CommentSettingsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        mode = services.set_moderation_mode(serializer.validated_data["comment_moderation"])
+        previous = services.get_moderation_mode()
+        with transaction.atomic():
+            mode = services.set_moderation_mode(serializer.validated_data["comment_moderation"])
+            if mode != previous:
+                audit.log(request, "settings.comment_moderation", None, mode_from=previous, mode_to=mode)
         return Response({"comment_moderation": mode})

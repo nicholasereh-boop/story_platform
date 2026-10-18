@@ -8,9 +8,7 @@ export const logout = () => api.post("/auth/logout/").then(data);
 export const register = (body) => api.post("/auth/register/", body).then(data); // also logs the new user in
 export const requestPasswordReset = (email) => api.post("/auth/password/reset/", { email }).then(data);
 export const resetPassword = (body) => api.post("/auth/password/reset/confirm/", body).then(data); // {uid, token, password}
-export const verifyEmail = (key) => api.post("/auth/email/verify/", { key }).then(data);
-export const resendVerification = () => api.post("/auth/email/resend/").then(data);
-export const updateProfile = (body) => api.patch("/auth/me/", body).then(data); // {display_name, bio}
+export const updateProfile = (body) => api.patch("/auth/me/", body).then(data); // {display_name, bio, email_new_stories}
 export const providers = () => api.get("/auth/providers/").then(data); // {google: bool}
 
 // ---- stories ----
@@ -64,3 +62,6 @@ export const analyticsOverview = (params) => api.get("/admin/analytics/overview/
 export const analyticsDaily = (params) => api.get("/admin/analytics/daily/", { params }).then(data);
 export const analyticsStories = (params) => api.get("/admin/analytics/stories/", { params }).then(data);
 export const analyticsTraffic = (params) => api.get("/admin/analytics/traffic/", { params }).then(data);
+
+// Phase 10: security and privacy endpoints live in their own file.
+export * from "./security";

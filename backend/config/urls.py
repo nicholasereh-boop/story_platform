@@ -16,12 +16,15 @@ def api_not_found(request, exception=None):
 
 
 urlpatterns = [
-    path("django-admin/", admin.site.urls),
     path("accounts/", include("allauth.urls")),  # Google login lives at /accounts/google/login/
     # URLPathVersioning reads the "version" group, so /api/v1/... is version "v1".
     re_path(r"^api/(?P<version>v1)/", include("config.api_urls")),
     re_path(r"^api/", api_not_found),  # anything else under /api/ -> JSON 404
 ]
+
+if settings.DJANGO_ADMIN_ENABLED:
+    # The built-in admin lives at DJANGO_ADMIN_URL (default "django-admin/") and can be switched off entirely.
+    urlpatterns.insert(0, path(settings.DJANGO_ADMIN_URL, admin.site.urls))
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

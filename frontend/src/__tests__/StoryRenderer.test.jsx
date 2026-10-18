@@ -57,8 +57,7 @@ describe("StoryRenderer", () => {
 
   it("renders YouTube as a youtube-nocookie iframe and ignores a bad id", () => {
     const ok = html(doc({ type: "youtube", attrs: { videoId: "dQw4w9WgXcQ" } })).querySelector("iframe");
-    expect(ok.getAttribute("src")).toBe("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ");
-    expect(ok.getAttribute("loading")).toBe("lazy");
+    expect(ok.getAttribute("src")).toMatch(/^https:\/\/www\.youtube-nocookie\.com\/embed\/dQw4w9WgXcQ\?autoplay=1&mute=1/); // reader pages autoplay, muted
     expect(html(doc({ type: "youtube", attrs: { videoId: "x\" onload=\"y" } })).querySelector("iframe")).toBeNull();
   });
 

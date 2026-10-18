@@ -4,13 +4,19 @@ from django.db.models import F
 from django.utils import timezone
 
 from .models import Story, StoryRevision
+from .notifications import queue_new_story_email
 
 
 def publish_due():
     """Publish scheduled stories whose time has come. One UPDATE; safe to call on every request."""
-    return Story.objects.filter(status=Story.Status.SCHEDULED, scheduled_at__lte=timezone.now()).update(
+    due = Story.objects.filter(status=Story.Status.SCHEDULED, scheduled_at__lte=timezone.now())
+    ids = list(due.values_list("pk", flat=True))
+    count = Story.objects.filter(pk__in=ids, status=Story.Status.SCHEDULED).update(
         status=Story.Status.PUBLISHED, published_at=F("scheduled_at")
     )
+    for story_id in ids:
+        queue_new_story_email(story_id)  # emailed once: the sender skips stories that were already announced
+    return count
 
 
 def create_revision(story, user, min_interval_minutes=0):

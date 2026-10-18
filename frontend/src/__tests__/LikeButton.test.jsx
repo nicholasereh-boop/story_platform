@@ -12,7 +12,7 @@ vi.mock("../api/engagement", () => ({ getLikes: vi.fn(), likeStory: vi.fn(), unl
 import * as api from "../api/engagement";
 import LikeButton from "../components/engagement/LikeButton";
 
-const reader = { email: "a@example.com", email_verified: true };
+const reader = { email: "a@example.com" };
 const serverError = () => Object.assign(new Error("boom"), { status: 500, friendly: "Could not save your like." });
 
 function show(props = {}) {

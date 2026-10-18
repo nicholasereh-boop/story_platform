@@ -14,7 +14,7 @@ function CommentsSkeleton() {
 
 // The discussion under a story: loading / empty / error states, nested replies, "Load more".
 // Permissions: buttons come from the server's per-comment flags (can_edit, can_delete), so Edit and Delete only
-// ever appear on the reader's own comments (Delete also for staff); Reply needs a verified email, Report a login.
+// ever appear on the reader's own comments (Delete also for staff); Reply and Report need a login.
 export default function CommentList({ slug, user }) {
   const queryClient = useQueryClient();
   const key = ["comments", slug];
@@ -64,7 +64,7 @@ export default function CommentList({ slug, user }) {
     <>
       <ul className="comment-list">
         {comments.map((comment) => (
-          <CommentItem key={comment.id} comment={comment} canReply={Boolean(user?.email_verified)} canReport={Boolean(user)} actions={actions} />
+          <CommentItem key={comment.id} comment={comment} canReply={Boolean(user)} canReport={Boolean(user)} actions={actions} />
         ))}
       </ul>
       {query.isFetchNextPageError && <p className="field-error" role="alert">{query.error?.friendly || "Could not load more comments."}</p>}

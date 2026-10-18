@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useBlocker, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createStory, getStory, listCategories, patchStory, storyAction } from "../../api";
+import CategoryPicker from "../../components/CategoryPicker";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import ErrorBoundary from "../../components/ErrorBoundary";
 import MediaPicker from "../../components/media/MediaPicker";
@@ -357,19 +358,7 @@ function StoryEditScreen({ id }) {
 
           <section className="side-section">
             <h2>Categories</h2>
-            {categories.isLoading && <p className="muted small">Loading…</p>}
-            {categories.isError && <p className="field-error">{categories.error.friendly}</p>}
-            {categories.data?.length === 0 && <p className="muted small">No categories yet.</p>}
-            <ul className="check-list">
-              {(categories.data || []).map((c) => (
-                <li key={c.id}>
-                  <label>
-                    <input type="checkbox" checked={form.category_ids.includes(c.id)} onChange={(e) => setField({ category_ids: e.target.checked ? [...form.category_ids, c.id] : form.category_ids.filter((x) => x !== c.id) })} />
-                    {c.name}
-                  </label>
-                </li>
-              ))}
-            </ul>
+            <CategoryPicker value={form.category_ids} onChange={(category_ids) => setField({ category_ids })} />
             <FieldError errors={fieldErrors.category_ids} />
           </section>
 

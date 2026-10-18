@@ -1,7 +1,6 @@
 """Shared helpers for the Phase 8 (likes and comments) tests."""
 from datetime import timedelta
 
-from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework.test import APIClient
@@ -26,9 +25,8 @@ def make_story(title="A story", status="published", **extra):
     return story
 
 
-def make_user(email="reader@example.com", verified=True, staff=False):
+def make_user(email="reader@example.com", staff=False):
     user = get_user_model().objects.create_user(email=email, password=PASSWORD, is_staff=staff)
-    EmailAddress.objects.create(user=user, email=user.email, verified=verified, primary=True)
     return user
 
 

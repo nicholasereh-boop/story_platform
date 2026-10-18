@@ -25,5 +25,4 @@ export const mfaNewRecoveryCodes = (body) => api.post("/auth/mfa/recovery-codes/
 export const listUsers = (params) => api.get("/admin/users/", { params }).then(paged);
 export const patchUser = (id, body) => api.patch(`/admin/users/${id}/`, body).then(data); // only {is_active, is_staff}
 export const revokeUserSessions = (id) => api.post(`/admin/users/${id}/revoke-sessions/`).then(data);
-export const resendUserVerification = (id) => api.post(`/admin/users/${id}/resend-verification/`).then(data);
 export const listAuditLogs = (params) => api.get("/admin/audit-logs/", { params }).then(paged);

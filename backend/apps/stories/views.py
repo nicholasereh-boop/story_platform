@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -5,6 +6,7 @@ from rest_framework import generics, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.audit import service as audit
 from apps.core.permissions import IsStaffUser
 
 from .content import clean_content, has_content
@@ -17,6 +19,7 @@ from .serializers import (
     ScheduleSerializer,
     TagSerializer,
 )
+from .notifications import queue_new_story_email
 from .services import create_revision, publish_due
 
 ORDERINGS = {"title", "-title", "created_at", "-created_at", "updated_at", "-updated_at", "published_at", "-published_at"}
@@ -55,8 +58,10 @@ class AdminStoryListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         user = self.request.user
-        story = serializer.save(created_by=user, updated_by=user)
-        create_revision(story, user)  # revision 1
+        with transaction.atomic():  # the audit entry commits or rolls back together with the story
+            story = serializer.save(created_by=user, updated_by=user)
+            create_revision(story, user)  # revision 1
+            audit.log(self.request, "story.create", story, title=story.title, status=story.status)
 
 
 class AdminStoryDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -70,15 +75,24 @@ class AdminStoryDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_update(self, serializer):
         user = self.request.user
-        story = serializer.save(updated_by=user)
         autosave = self.request.query_params.get("autosave") == "1"
-        create_revision(story, user, min_interval_minutes=10 if autosave else 0)
+        with transaction.atomic():
+            story = serializer.save(updated_by=user)
+            create_revision(story, user, min_interval_minutes=10 if autosave else 0)
+            if not autosave:  # autosaves fire every few seconds; only deliberate saves are audited
+                audit.log(self.request, "story.update", story, title=story.title, fields=sorted(serializer.validated_data))
+
+    def perform_destroy(self, instance):
+        with transaction.atomic():
+            audit.log(self.request, "story.delete", instance, title=instance.title, status=instance.status)
+            instance.delete()
 
 
 class StoryActionView(APIView):
     """Base for publish / unpublish / archive / schedule. Subclasses implement apply()."""
 
     permission_classes = [IsStaffUser]
+    audit_action = ""
 
     def apply(self, request, story):
         raise NotImplementedError
@@ -86,14 +100,22 @@ class StoryActionView(APIView):
     def post(self, request, pk, *args, **kwargs):
         publish_due()
         story = get_object_or_404(story_queryset(), pk=pk)
-        self.apply(request, story)
-        story.updated_by = request.user
-        story.save()
-        create_revision(story, request.user)  # no-op unless the content changed
+        status_from = story.status
+        with transaction.atomic():
+            self.apply(request, story)
+            story.updated_by = request.user
+            story.save()
+            create_revision(story, request.user)  # no-op unless the content changed
+            extra = {"scheduled_at": story.scheduled_at} if story.scheduled_at else {}
+            audit.log(request, self.audit_action, story, title=story.title, status_from=status_from, status_to=story.status, **extra)
+        if story.status == Story.Status.PUBLISHED:
+            transaction.on_commit(lambda: queue_new_story_email(story.pk))  # emailed once per story; later saves are ignored
         return Response(AdminStorySerializer(story).data)
 
 
 class PublishView(StoryActionView):
+    audit_action = "story.publish"
+
     def apply(self, request, story):
         if not story.title.strip():
             raise serializers.ValidationError({"detail": ["Give the story a title before publishing."]})
@@ -105,16 +127,22 @@ class PublishView(StoryActionView):
 
 
 class UnpublishView(StoryActionView):
+    audit_action = "story.unpublish"
+
     def apply(self, request, story):
         story.status = Story.Status.DRAFT
 
 
 class ArchiveView(StoryActionView):
+    audit_action = "story.archive"
+
     def apply(self, request, story):
         story.status = Story.Status.ARCHIVED
 
 
 class ScheduleView(StoryActionView):
+    audit_action = "story.schedule"
+
     def apply(self, request, story):
         serializer = ScheduleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -141,31 +169,57 @@ class RestoreRevisionView(APIView):
     def post(self, request, pk, revision_id, *args, **kwargs):
         story = get_object_or_404(story_queryset(), pk=pk)
         revision = get_object_or_404(StoryRevision, pk=revision_id, story=story)
-        story.title = revision.title
-        story.excerpt = revision.excerpt
-        story.content_json = clean_content(revision.content_json)  # never trust stored data blindly
-        story.updated_by = request.user
-        story.save()
-        create_revision(story, request.user)  # the restore itself becomes a new revision
+        with transaction.atomic():
+            story.title = revision.title
+            story.excerpt = revision.excerpt
+            story.content_json = clean_content(revision.content_json)  # never trust stored data blindly
+            story.updated_by = request.user
+            story.save()
+            create_revision(story, request.user)  # the restore itself becomes a new revision
+            audit.log(request, "story.restore_revision", story, title=story.title, revision_number=revision.revision_number)
         return Response(AdminStorySerializer(story).data)
 
 
 # ---------------------------------------------------------------- categories & tags
-class AdminCategoryListCreateView(generics.ListCreateAPIView):
+class AuditedTaxonomyMixin:
+    """create / update / delete of a category or tag, each recorded in the audit log in the same transaction."""
+
+    audit_prefix = ""
+
+    def perform_create(self, serializer):
+        with transaction.atomic():
+            obj = serializer.save()
+            audit.log(self.request, f"{self.audit_prefix}.create", obj, name=obj.name)
+
+    def perform_update(self, serializer):
+        with transaction.atomic():
+            obj = serializer.save()
+            audit.log(self.request, f"{self.audit_prefix}.update", obj, name=obj.name, fields=sorted(serializer.validated_data))
+
+    def perform_destroy(self, instance):
+        with transaction.atomic():
+            audit.log(self.request, f"{self.audit_prefix}.delete", instance, name=instance.name)
+            instance.delete()
+
+
+class AdminCategoryListCreateView(AuditedTaxonomyMixin, generics.ListCreateAPIView):
+    audit_prefix = "category"
     permission_classes = [IsStaffUser]
     serializer_class = CategorySerializer
     pagination_class = None
     queryset = Category.objects.annotate(story_count=Count("stories"))
 
 
-class AdminCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
+class AdminCategoryDetailView(AuditedTaxonomyMixin, generics.RetrieveUpdateDestroyAPIView):
+    audit_prefix = "category"
     permission_classes = [IsStaffUser]
     serializer_class = CategorySerializer
     http_method_names = ["get", "patch", "delete", "head", "options"]
     queryset = Category.objects.annotate(story_count=Count("stories"))  # deleting only unlinks stories
 
 
-class AdminTagListCreateView(generics.ListCreateAPIView):
+class AdminTagListCreateView(AuditedTaxonomyMixin, generics.ListCreateAPIView):
+    audit_prefix = "tag"
     permission_classes = [IsStaffUser]
     serializer_class = TagSerializer
     pagination_class = None
@@ -176,7 +230,8 @@ class AdminTagListCreateView(generics.ListCreateAPIView):
         return qs.filter(name__icontains=q) if q else qs
 
 
-class AdminTagDetailView(generics.RetrieveUpdateDestroyAPIView):
+class AdminTagDetailView(AuditedTaxonomyMixin, generics.RetrieveUpdateDestroyAPIView):
+    audit_prefix = "tag"
     permission_classes = [IsStaffUser]
     serializer_class = TagSerializer
     http_method_names = ["get", "patch", "delete", "head", "options"]

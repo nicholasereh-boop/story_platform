@@ -144,9 +144,6 @@ def test_user_management_actions_are_recorded(superuser_client, superuser):
     assert "target@example.com" not in str(last("user.update").metadata)
     superuser_client.post(f"{ADMIN}users/{target.pk}/revoke-sessions/")
     assert last("user.sessions_revoked").object_id == str(target.pk)
-    again = make_user("again@example.com", verified=False)
-    superuser_client.post(f"{ADMIN}users/{again.pk}/resend-verification/")
-    assert last("user.verification_resent").object_id == str(again.pk)
 
 
 def test_account_deletion_is_recorded(client, user):

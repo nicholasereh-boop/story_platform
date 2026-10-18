@@ -12,7 +12,7 @@ export const READ_TRIGGER = 0.6; // ... or after about 60% of a story has been r
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // Pages where the prompt must never appear.
-const BLOCKED_PREFIXES = ["/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/admin"];
+const BLOCKED_PREFIXES = ["/login", "/register", "/forgot-password", "/reset-password", "/admin"];
 
 export function isBlockedPath(pathname) {
   return BLOCKED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));

@@ -17,9 +17,9 @@ const comment = (id, extra = {}) => ({
 const page = (items, extra = {}) => ({
   items, pagination: { count: items.length, page: 1, page_size: 20, total_pages: 1, has_next: false, has_previous: false, ...extra },
 });
-const verified = { email: "me@example.com", email_verified: true };
+const reader = { email: "me@example.com" };
 
-function show(user = verified) {
+function show(user = reader) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
@@ -128,16 +128,16 @@ describe("CommentList permissions", () => {
     expect(has(row("body 1"), "Delete")).toBeTruthy(); // deleting is not limited by the window
   });
 
-  it("offers no Reply or Report to a visitor, and no Reply to an unverified reader", async () => {
+  it("offers no Reply or Report to a visitor, but Reply and Report to a logged-in reader without any email check", async () => {
     api.listComments.mockResolvedValue(page([comment(1)]));
     const first = show(null);
     await screen.findByText("body 1");
     expect(has(row("body 1"), "Reply")).toBeNull();
     expect(has(row("body 1"), "Report")).toBeNull();
     first.unmount();
-    show({ email: "u@example.com", email_verified: false });
+    show({ email: "u@example.com" });
     await screen.findByText("body 1");
-    expect(has(row("body 1"), "Reply")).toBeNull();
+    expect(has(row("body 1"), "Reply")).toBeTruthy();
     expect(has(row("body 1"), "Report")).toBeTruthy();
   });
 });

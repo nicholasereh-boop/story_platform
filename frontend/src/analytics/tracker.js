@@ -1,6 +1,9 @@
+import { cleanMode, consentAllows, readConsent } from "../privacy/consent";
+
 // First-party page-view tracking. Privacy rules (docs/ANALYTICS.md):
 //   - no cookies: a random visitor id lives in localStorage, a random session id in sessionStorage;
 //   - nothing is sent when the browser says Do Not Track / Global Privacy Control, or the visitor switched analytics off;
+//   - in consent mode "opt_in" nothing is sent until the visitor accepted; in "opt_out" nothing after they rejected (Phase 10);
 //   - nothing is sent for the admin, login/sign-up/password pages or /account;
 //   - only the PATH is sent (never the query string), plus the referrer the browser reports for the first page of a visit.
 // EVERY storage access is wrapped in try/catch: blocked storage must never break the page or the tracking rule.
@@ -9,8 +12,15 @@ export const SESSION_KEY = "sb.session-id";
 export const OPT_OUT_KEY = "sb.analytics-off";
 export const COLLECT_URL = "/api/v1/analytics/collect/";
 
+// What the server said about this site (from /api/v1/public-config/): the consent mode and whether analytics are on at all.
+// Until the app has loaded it, nothing is sent (useTracker waits).
+let runtime = { mode: "notice", enabled: true };
+export function configureTracker({ mode, enabled }) {
+  runtime = { mode: cleanMode(mode), enabled: enabled !== false };
+}
+
 // Pages that are never tracked (the server ignores them too).
-const EXCLUDED_PREFIXES = ["/admin", "/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/account"];
+const EXCLUDED_PREFIXES = ["/admin", "/login", "/register", "/forgot-password", "/reset-password", "/account"];
 
 export function isExcludedPath(pathname) {
   return EXCLUDED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
@@ -43,8 +53,9 @@ export function setOptedOut(off) {
   }
 }
 
+// All the reasons not to track, in one place: the site setting, the browser's signals, the footer switch and the consent choice.
 export function trackingAllowed() {
-  return !browserSaysNo() && !isOptedOut();
+  return runtime.enabled && !browserSaysNo() && !isOptedOut() && consentAllows(runtime.mode, readConsent());
 }
 
 function randomId() {
@@ -74,7 +85,9 @@ export const getSessionId = () => storedId("sessionStorage", SESSION_KEY);
 // Send one page view. Never throws, never retries, never waits: analytics must not slow down or break the site.
 export function sendPageView({ pathname, referrer = "" }) {
   try {
-    const body = JSON.stringify({ path: pathname, visitor_id: getVisitorId(), session_id: getSessionId(), referrer });
+    const payload = { path: pathname, visitor_id: getVisitorId(), session_id: getSessionId(), referrer };
+    if (runtime.mode === "opt_in") payload.consent = true; // the server ignores events without it in this mode
+    const body = JSON.stringify(payload);
     if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
       const queued = navigator.sendBeacon(COLLECT_URL, new Blob([body], { type: "application/json" }));
       if (queued) return;

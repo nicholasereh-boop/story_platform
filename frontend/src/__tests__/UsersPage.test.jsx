@@ -4,13 +4,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const auth = { user: { id: 1, email: "boss@example.com", is_staff: true, is_superuser: true } };
 vi.mock("../auth/AuthContext", () => ({ useAuth: () => auth }));
-vi.mock("../api/security", () => ({ listUsers: vi.fn(), patchUser: vi.fn(), revokeUserSessions: vi.fn(), resendUserVerification: vi.fn() }));
+vi.mock("../api/security", () => ({ listUsers: vi.fn(), patchUser: vi.fn(), revokeUserSessions: vi.fn() }));
 
 import * as sec from "../api/security";
 import UsersPage, { actionRules } from "../pages/admin/UsersPage";
 
 const row = (id, over = {}) => ({
-  id, email: `u${id}@example.com`, display_name: `User ${id}`, role: "reader", is_active: true, is_staff: false, is_superuser: false, email_verified: true,
+  id, email: `u${id}@example.com`, display_name: `User ${id}`, role: "reader", is_active: true, is_staff: false, is_superuser: false,
   date_joined: "2026-01-02T10:00:00Z", last_login: null, comment_count: 2, like_count: 3, mfa_enabled: false, anonymised: false, ...over,
 });
 const boss = row(1, { email: "boss@example.com", display_name: "Boss", role: "superuser", is_staff: true, is_superuser: true });
@@ -24,10 +24,9 @@ const rowOf = async (email) => within((await screen.findByText(email)).closest("
 beforeEach(() => {
   vi.clearAllMocks();
   auth.user = { id: 1, email: "boss@example.com", is_staff: true, is_superuser: true };
-  sec.listUsers.mockImplementation(async (params) => (params.role === "superuser" ? page([boss, row(9, { role: "superuser", is_superuser: true, is_staff: true })]) : page([boss, row(2), row(3, { email_verified: false })])));
+  sec.listUsers.mockImplementation(async (params) => (params.role === "superuser" ? page([boss, row(9, { role: "superuser", is_superuser: true, is_staff: true })]) : page([boss, row(2), row(3)])));
   sec.patchUser.mockResolvedValue({});
   sec.revokeUserSessions.mockResolvedValue({ ended: 1 });
-  sec.resendUserVerification.mockResolvedValue({ sent: true });
 });
 
 describe("UsersPage", () => {
@@ -36,9 +35,7 @@ describe("UsersPage", () => {
     const r2 = await rowOf("u2@example.com");
     expect(r2.getByText("Reader")).toBeTruthy();
     expect(r2.getByText("Active")).toBeTruthy();
-    expect(r2.getByText("Verified")).toBeTruthy();
     expect(r2.getByText("2 comments, 3 likes")).toBeTruthy();
-    expect((await rowOf("u3@example.com")).getByText("Not verified")).toBeTruthy();
     expect((await rowOf("boss@example.com")).getByText("Superuser")).toBeTruthy();
   });
 
@@ -86,7 +83,7 @@ describe("UsersPage", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("superusers can make staff; revoke sessions and resend verification work", async () => {
+  it("superusers can make staff; and revoking sessions work", async () => {
     show();
     fireEvent.click((await rowOf("u2@example.com")).getByRole("button", { name: "Make staff" }));
     fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Make staff" }));
@@ -96,9 +93,6 @@ describe("UsersPage", () => {
     fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Sign out" }));
     await waitFor(() => expect(sec.revokeUserSessions).toHaveBeenCalledWith(2));
 
-    fireEvent.click((await rowOf("u3@example.com")).getByRole("button", { name: "Resend verification" }));
-    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Send email" }));
-    await waitFor(() => expect(sec.resendUserVerification).toHaveBeenCalledWith(3));
   });
 
   it("shows the server's error inside the dialog and keeps it open", async () => {
@@ -153,9 +147,5 @@ describe("actionRules", () => {
     const r = actionRules({ ...base, target: row(2, { anonymised: true }) });
     expect(r.toggleActive).toMatch(/deleted/);
     expect(r.sessions).toMatch(/deleted/);
-  });
-  it("does not offer verification for deactivated or verified accounts", () => {
-    expect(actionRules({ ...base, target: row(2, { is_active: false, email_verified: false }) }).verification).toMatch(/deactivated/);
-    expect(actionRules({ ...base, target: row(2) }).verification).toBe("Already verified.");
   });
 });

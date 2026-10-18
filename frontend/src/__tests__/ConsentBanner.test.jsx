@@ -64,7 +64,7 @@ describe("consent banner", () => {
     expect(screen.getByRole("region", { name: "Your privacy choice" })).toBeTruthy();
   });
 
-  it.each(["/admin/stories", "/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/account"])("never appears on %s", (path) => {
+  it.each(["/admin/stories", "/login", "/register", "/forgot-password", "/reset-password", "/account"])("never appears on %s", (path) => {
     show("opt_in", path);
     expect(screen.queryByRole("region", { name: "Your privacy choice" })).toBeNull();
   });

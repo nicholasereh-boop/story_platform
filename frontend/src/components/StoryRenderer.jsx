@@ -8,6 +8,22 @@ import { extractYoutubeId, youtubeEmbedUrl } from "../utils/youtube";
 // below; a node type we do not know renders NOTHING (including its children). Text is rendered as React text, so
 // it is always escaped. Phase 7 (public site) reuses this component unchanged.
 
+// A YouTube video on the reader's page. It starts playing by itself as soon as the page loads.
+// Muted on purpose: browsers block autoplay with sound, so the reader taps the speaker icon for audio.
+function YoutubeEmbed({ id }) {
+  return (
+    <div className="yt-embed">
+      <iframe
+        src={youtubeEmbedUrl(id, { autoplay: true })}
+        title="YouTube video"
+        allow="autoplay; accelerometer; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        referrerPolicy="strict-origin-when-cross-origin"
+      />
+    </div>
+  );
+}
+
 const ALIGNS = ["left", "center", "right", "justify"];
 const IMAGE_ALIGNS = ["left", "center", "right"];
 const IMAGE_SIZES = ["small", "medium", "full"];
@@ -91,17 +107,7 @@ function renderNode(node, key) {
     case "youtube": {
       const id = extractYoutubeId(node.attrs?.videoId);
       if (!id) return null;
-      return (
-        <div key={key} className="yt-embed">
-          <iframe
-            src={youtubeEmbedUrl(id, { autoplay: true })}
-            title="YouTube video"
-            allow="autoplay; accelerometer; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            referrerPolicy="strict-origin-when-cross-origin"
-          />
-        </div>
-      );
+      return <YoutubeEmbed key={key} id={id} />;
     }
     default:
       return null; // unknown node: renders nothing

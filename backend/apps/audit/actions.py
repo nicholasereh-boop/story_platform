@@ -35,7 +35,6 @@ ACTIONS = {
     # users
     "user.update": "User account changed (active / staff)",
     "user.sessions_revoked": "User signed out of all devices by an administrator",
-    "user.verification_resent": "Verification email re-sent by an administrator",
     "user.anonymised": "Account deleted (anonymised) at the owner's request",
     # authentication and MFA
     "auth.staff_login": "Staff member logged in",

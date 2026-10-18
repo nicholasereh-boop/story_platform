@@ -15,5 +15,6 @@ export function extractYoutubeId(value) {
 /** Privacy-friendly embed address (no cookies until the visitor presses play). */
 export const youtubeEmbedUrl = (videoId, { autoplay = false } = {}) => {
   const base = `https://www.youtube-nocookie.com/embed/${videoId}`;
+  // Browsers only allow autoplay when the video starts muted, so autoplay always comes with mute=1.
   return autoplay ? `${base}?autoplay=1&mute=1&playsinline=1&rel=0` : base;
 };

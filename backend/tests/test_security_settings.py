@@ -210,18 +210,6 @@ def test_reset_token_cannot_be_used_twice(client, user):
     assert first.status_code == 200 and second.status_code == 400
 
 
-def test_expired_and_reused_verification_links_fail(client, user, settings):
-    from allauth.account.models import EmailAddress, EmailConfirmationHMAC
-
-    address = EmailAddress.objects.create(user=user, email=user.email, primary=True, verified=False)
-    key = EmailConfirmationHMAC(address).key
-    settings.ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = -1
-    assert client.post(API + "auth/email/verify/", {"key": key}, format="json").status_code == 400  # expired
-    settings.ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
-    assert client.post(API + "auth/email/verify/", {"key": key}, format="json").status_code == 200
-    assert client.post(API + "auth/email/verify/", {"key": key}, format="json").status_code == 400  # already used
-
-
 # ------------------------------------------------------------------ A4 CSRF and CORS
 def iter_routes(patterns=None, prefix=""):
     for p in patterns if patterns is not None else get_resolver().url_patterns:

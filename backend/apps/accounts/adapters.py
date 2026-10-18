@@ -9,10 +9,6 @@ from .services import fill_profile_from_google
 
 
 class AccountAdapter(DefaultAccountAdapter):
-    def get_email_confirmation_url(self, request, emailconfirmation):
-        # The link in the verification email opens the React page, which then calls POST /api/v1/auth/email/verify/.
-        return f"{settings.FRONTEND_URL}/verify-email?key={emailconfirmation.key}"
-
     def is_open_for_signup(self, request):
         return True
 

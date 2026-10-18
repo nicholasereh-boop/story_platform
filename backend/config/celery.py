@@ -18,4 +18,6 @@ app.conf.beat_schedule = {
     "analytics-aggregate-today": {"task": "apps.analytics.tasks.aggregate_recent", "schedule": 15 * 60.0},
     "analytics-finalise-yesterday": {"task": "apps.analytics.tasks.aggregate_recent", "schedule": crontab(hour=0, minute=10)},
     "analytics-purge-old": {"task": "apps.analytics.tasks.purge_old", "schedule": crontab(hour=3, minute=30)},
+    # Audit log retention (Phase 10): monthly, 04:15 UTC on the 1st.
+    "audit-purge-old": {"task": "apps.audit.tasks.purge_old_entries", "schedule": crontab(day_of_month="1", hour=4, minute=15)},
 }

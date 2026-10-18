@@ -1,14 +1,13 @@
 """Staff user management, mounted under /api/v1/admin/users/.
 
 Rules (enforced HERE, not only in the React UI):
-  - staff can list and view users, activate/deactivate readers and staff, end sessions and re-send verification mail
+  - staff can list and view users, activate/deactivate readers and staff and end sessions
   - only a SUPERUSER can grant or remove the staff role
   - staff cannot touch superuser accounts at all; the superuser flag itself can never be changed through the API
   - nobody can deactivate or demote themselves
   - the last active superuser can never be deactivated
   - passwords, hashes, MFA secrets and session keys are never returned
 """
-from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Count, Exists, OuterRef, Q
@@ -23,7 +22,7 @@ from apps.core.permissions import IsStaffUser, IsSuperUser
 
 from . import privacy, sessions
 from .models import MFADevice
-from .services import get_profile, is_email_verified, send_verification_email
+from .services import get_profile
 
 User = get_user_model()
 ALLOWED_FIELDS = {"is_active", "is_staff"}
@@ -39,7 +38,6 @@ def user_queryset():
         comment_count=Count("comments", filter=Q(comments__status="approved"), distinct=True),
         like_count=Count("likes", distinct=True),
         mfa_enabled=Exists(MFADevice.objects.filter(user=OuterRef("pk"), confirmed_at__isnull=False)),
-        email_is_verified=Exists(EmailAddress.objects.filter(user=OuterRef("pk"), email__iexact=OuterRef("email"), verified=True)),
     )
 
 
@@ -48,7 +46,6 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
     display_name = serializers.SerializerMethodField()
     role = serializers.SerializerMethodField()
-    email_verified = serializers.SerializerMethodField()
     comment_count = serializers.IntegerField(read_only=True)
     like_count = serializers.IntegerField(read_only=True)
     mfa_enabled = serializers.BooleanField(read_only=True)
@@ -57,7 +54,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            "id", "email", "display_name", "role", "is_active", "is_staff", "is_superuser", "email_verified",
+            "id", "email", "display_name", "role", "is_active", "is_staff", "is_superuser",
             "date_joined", "last_login", "comment_count", "like_count", "mfa_enabled", "anonymised",
         ]
         read_only_fields = fields
@@ -69,10 +66,6 @@ class AdminUserSerializer(serializers.ModelSerializer):
     def get_role(self, obj):
         return role_of(obj)
 
-    def get_email_verified(self, obj):
-        value = getattr(obj, "email_is_verified", None)
-        return is_email_verified(obj) if value is None else bool(value)
-
     def get_anonymised(self, obj):
         return privacy.is_anonymised(obj)
 
@@ -83,7 +76,7 @@ def bool_param(params, name):
 
 
 class AdminUserListView(generics.ListAPIView):
-    """Filters: ?role=reader|staff|superuser, ?active=1|0, ?verified=1|0, ?q= (email or display name), ?ordering=."""
+    """Filters: ?role=reader|staff|superuser, ?active=1|0, ?q= (email or display name), ?ordering=."""
 
     permission_classes = [IsStaffUser]
     serializer_class = AdminUserSerializer
@@ -101,9 +94,6 @@ class AdminUserListView(generics.ListAPIView):
         active = bool_param(params, "active")
         if active is not None:
             qs = qs.filter(is_active=active)
-        verified = bool_param(params, "verified")
-        if verified is not None:
-            qs = qs.filter(email_is_verified=verified)
         q = (params.get("q") or "").strip()
         if q:
             qs = qs.filter(Q(email__icontains=q) | Q(profile__display_name__icontains=q))
@@ -177,18 +167,3 @@ class AdminUserRevokeSessionsView(APIView):
             ended = sessions.revoke_all(target)
             audit.log(request, "user.sessions_revoked", target, ended=ended)
         return Response({"message": f"Signed out of {ended} session(s).", "ended": ended})
-
-
-class AdminUserResendVerificationView(APIView):
-    permission_classes = [IsStaffUser]
-    http_method_names = ["post", "options"]
-
-    def post(self, request, pk, *args, **kwargs):
-        target = _writable_target(request, pk)
-        if not target.is_active or privacy.is_anonymised(target):
-            raise serializers.ValidationError({"detail": ["This account is not active."]})
-        sent = send_verification_email(request._request, target)
-        if not sent:
-            return Response({"message": "This address is already verified.", "sent": False})
-        audit.log(request, "user.verification_resent", target)
-        return Response({"message": "Verification email sent.", "sent": True})

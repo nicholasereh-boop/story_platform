@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 
-const auth = { user: null, ready: true, register: vi.fn(), resetPassword: vi.fn(), requestPasswordReset: vi.fn(), verifyEmail: vi.fn() };
+const auth = { user: null, ready: true, register: vi.fn(), resetPassword: vi.fn(), requestPasswordReset: vi.fn() };
 vi.mock("../auth/AuthContext", () => ({ useAuth: () => auth }));
 vi.mock("../api", () => ({ providers: vi.fn() }));
 
@@ -11,7 +11,6 @@ import * as api from "../api";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import RegisterPage from "../pages/auth/RegisterPage";
 import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
-import VerifyEmailPage from "../pages/auth/VerifyEmailPage";
 
 const GOOD = "Correct-horse-battery-9";
 const fail = (fieldErrors, friendly = "Please correct the highlighted fields.") => Object.assign(new Error("x"), { status: 400, fieldErrors, friendly });
@@ -60,10 +59,10 @@ describe("RegisterPage", () => {
   });
 
   it("shows the server's field errors next to the fields", async () => {
-    auth.register.mockRejectedValue(fail({ email: ["An account with this email already exists."], password: ["This password is too common."] }));
+    auth.register.mockRejectedValue(fail({ email: ["Enter a valid email address."], password: ["This password is too common."] }));
     show(<RegisterPage />);
     fill();
-    expect(await screen.findByText("An account with this email already exists.")).toBeTruthy();
+    expect(await screen.findByText("Enter a valid email address.")).toBeTruthy();
     expect(screen.getByText("This password is too common.")).toBeTruthy();
     expect(screen.getByLabelText("Email").getAttribute("aria-invalid")).toBe("true");
   });
@@ -75,12 +74,13 @@ describe("RegisterPage", () => {
     expect((await screen.findByRole("alert")).textContent).toBe("Too many sign-ups. Try again later.");
   });
 
-  it("welcomes the new user and mentions the verification email", async () => {
-    auth.register.mockResolvedValue({ email: "new@example.com", is_staff: false });
+  it("never logs in or reveals whether the address existed: it says to check the email", async () => {
+    auth.register.mockResolvedValue({ message: "Thanks for signing up!" });
     show(<RegisterPage />);
     fill();
-    expect(await screen.findByRole("heading", { name: "Welcome!" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Welcome aboard" })).toBeTruthy();
     expect(screen.getByText("new@example.com")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Go to log in" })).toBeTruthy();
     expect(auth.register).toHaveBeenCalledWith({ email: "new@example.com", password: GOOD, display_name: "" });
   });
 
@@ -152,27 +152,5 @@ describe("ForgotPasswordPage", () => {
     typeInto("Email", "someone@example.com");
     fireEvent.click(screen.getByRole("button", { name: "Send reset link" }));
     expect((await screen.findByRole("alert")).textContent).toBe("Request was throttled.");
-  });
-});
-
-describe("VerifyEmailPage", () => {
-  it("sends the key from the link exactly once and confirms", async () => {
-    auth.verifyEmail.mockResolvedValue({ email_verified: true });
-    show(<VerifyEmailPage />, "/verify-email?key=abc:def");
-    expect(await screen.findByText(/your email is verified/i)).toBeTruthy();
-    expect(auth.verifyEmail).toHaveBeenCalledTimes(1);
-    expect(auth.verifyEmail).toHaveBeenCalledWith("abc:def");
-  });
-
-  it("shows the server's message for a bad link", async () => {
-    auth.verifyEmail.mockRejectedValue(Object.assign(new Error("x"), { status: 400, fieldErrors: {}, friendly: "This verification link is invalid or has expired." }));
-    show(<VerifyEmailPage />, "/verify-email?key=bad");
-    await waitFor(() => expect(screen.getByRole("alert").textContent).toBe("This verification link is invalid or has expired."));
-  });
-
-  it("explains a link without a key", () => {
-    show(<VerifyEmailPage />, "/verify-email");
-    expect(screen.getByRole("alert").textContent).toMatch(/incomplete/i);
-    expect(auth.verifyEmail).not.toHaveBeenCalled();
   });
 });

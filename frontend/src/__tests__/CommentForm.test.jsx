@@ -44,14 +44,14 @@ describe("CommentForm", () => {
   });
 
   it("keeps the text and shows the server's message for 400 and 403", async () => {
-    const onSubmit = vi.fn().mockRejectedValueOnce(rejection(400, "Comments can contain at most 2 links.")).mockRejectedValueOnce(rejection(403, "Please verify your email address first."));
+    const onSubmit = vi.fn().mockRejectedValueOnce(rejection(400, "Comments can contain at most 2 links.")).mockRejectedValueOnce(rejection(403, "You are not allowed to do that."));
     render(<CommentForm onSubmit={onSubmit} />);
     type("see http://a http://b http://c");
     fireEvent.click(post());
     expect((await screen.findByRole("alert")).textContent).toBe("Comments can contain at most 2 links.");
     expect(screen.getByRole("textbox").value).toBe("see http://a http://b http://c");
     fireEvent.click(post());
-    await waitFor(() => expect(screen.getByRole("alert").textContent).toBe("Please verify your email address first."));
+    await waitFor(() => expect(screen.getByRole("alert").textContent).toBe("You are not allowed to do that."));
   });
 
   it("shows a plain message for 429 (too many comments)", async () => {

@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from rest_framework.test import APIClient
 
-from apps.core.permissions import IsOwnerOrStaff, IsStaffUser, IsSuperUser, IsVerifiedEmail
+from apps.core.permissions import IsOwnerOrStaff, IsStaffUser, IsSuperUser
 
 from .conftest import PASSWORD
 
@@ -63,12 +63,6 @@ def test_owner_or_staff_object_permission(user, staff):
     assert not perm.has_object_permission(req(other), None, SimpleNamespace(user=user))
     assert perm.has_object_permission(req(staff), None, SimpleNamespace(user=user))
     assert not perm.has_object_permission(req(), None, SimpleNamespace(user=user))
-
-
-def test_is_verified_email(user):
-    assert not IsVerifiedEmail().has_permission(req(user), None)
-    EmailAddress.objects.create(user=user, email=user.email, primary=True, verified=True)
-    assert IsVerifiedEmail().has_permission(req(user), None)
 
 
 # ---- create_admin command --------------------------------------------------------------

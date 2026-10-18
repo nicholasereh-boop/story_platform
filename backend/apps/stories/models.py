@@ -68,6 +68,7 @@ class Story(models.Model):
     is_featured = models.BooleanField(default=False)
     published_at = models.DateTimeField(null=True, blank=True)
     scheduled_at = models.DateTimeField(null=True, blank=True)
+    notified_at = models.DateTimeField(null=True, blank=True)  # when the "new story" emails were sent (once per story, ever)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     created_at = models.DateTimeField(auto_now_add=True)
