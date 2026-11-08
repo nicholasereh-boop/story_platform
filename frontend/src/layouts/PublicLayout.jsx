@@ -7,6 +7,7 @@ import ConsentBanner from "../components/public/ConsentBanner";
 import { SignupPromptProvider } from "../engagement/SignupPromptContext";
 import { ConsentProvider, useConsent } from "../privacy/ConsentContext";
 import { usePublicConfig } from "../privacy/usePublicConfig";
+import "../styles/public-white.css";
 
 // Frame of every public page: skip link, header, <main>, footer. Routes inside it fill <main>.
 // SignupPromptProvider wraps it all so any page can ask for the "join us" prompt (anonymous visitors only).
@@ -23,6 +24,10 @@ function PublicFrame({ config }) {
   const { pathname } = useLocation();
   const main = useRef(null);
   const consent = useConsent();
+  const darkPage = pathname === "/"; // the home page is dark
+  const storyPage = /^\/stories\/[^/]+/.test(pathname); // one story: dark, with extras for readers
+  const whitePage = pathname === "/stories" || pathname === "/stories/"; // the list of all stories
+  const marketPage = /^\/marketplace\/?$/.test(pathname) || /^\/marketplace\/projects\/[^/]+\/?$/.test(pathname); // the marketplace and one project (not the seller's edit page)
   // One anonymous page view per route change (never staff, never excluded pages, honours DNT/GPC, the footer switch and
   // the consent choice). Nothing is sent until the server's consent mode is known.
   useTracker({ configReady: config.loaded, mode: config.mode, enabled: config.analyticsEnabled, version: consent.version });
@@ -37,7 +42,7 @@ function PublicFrame({ config }) {
 
   return (
     <SignupPromptProvider>
-      <div className="public-shell">
+      <div className={`public-shell${whitePage ? " page-white" : ""}${darkPage ? " page-dark" : ""}${storyPage ? " page-story" : ""}${marketPage ? " page-market" : ""}`}>
         <a className="skip-link" href="#main" onClick={(e) => { e.preventDefault(); main.current?.focus(); }}>Skip to content</a>
         <Header />
         <main id="main" ref={main} tabIndex={-1}>

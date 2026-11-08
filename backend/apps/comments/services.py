@@ -34,15 +34,20 @@ def set_moderation_mode(mode):
     return mode
 
 
-def initial_status(user):
-    """Status a NEW comment gets, from the moderation mode. Staff are never held for review."""
-    if user.is_staff:
+def initial_status(user, session_key=None):
+    """Status a NEW comment gets, from the moderation mode. Staff are never held for review.
+
+    An anonymous visitor is "the same person" for as long as their session lasts, so "first time" means
+    their first approved comment from this session.
+    """
+    if user is not None and user.is_staff:
         return S.APPROVED
     mode = get_moderation_mode()
     if mode == "approve_first":
         return S.PENDING
     if mode == "approve_first_time":
-        has_approved = Comment.objects.filter(user=user, status=S.APPROVED).exists()
+        author = {"user": user} if user is not None else {"user": None, "session_key": session_key}
+        has_approved = Comment.objects.filter(status=S.APPROVED, **author).exists()
         return S.APPROVED if has_approved else S.PENDING
     return S.APPROVED
 
@@ -71,9 +76,20 @@ def can_reply_to(target):
 
 
 @transaction.atomic
-def create_comment(*, user, story, body, reply_to=None):
+def create_comment(*, user, story, body, reply_to=None, session_key=None, guest_name=""):
+    """Create a comment for a logged-in `user`, or for an anonymous visitor (`user=None` + their `session_key`)."""
+    if user is None and not session_key:
+        raise ValueError("A comment needs a user or a session key.")
     parent = top_level(reply_to) if reply_to is not None else None
-    comment = Comment.objects.create(story=story, user=user, body=body, parent=parent, status=initial_status(user))
+    comment = Comment.objects.create(
+        story=story,
+        user=user,
+        session_key=None if user is not None else session_key,
+        guest_name="" if user is not None else guest_name,
+        body=body,
+        parent=parent,
+        status=initial_status(user, session_key),
+    )
     weight = visible_weight(
         comment.status, is_reply=parent is not None, parent_status=parent.status if parent else None
     )

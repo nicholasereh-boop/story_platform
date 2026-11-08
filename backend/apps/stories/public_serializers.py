@@ -108,10 +108,13 @@ class PublicStorySerializer(PublicStoryListSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         request = self.context.get("request")
-        user = getattr(request, "user", None)
-        if user is not None and user.is_authenticated:  # only logged-in readers get this key
-            from apps.reactions.models import Like
+        if request is not None:  # logged-in readers AND visitors who already liked something learn if they liked it
+            from apps.reactions.services import has_liked
+            from apps.reactions.views import visitor_id_for
 
-            data["liked_by_me"] = Like.objects.filter(user=user, story=instance).exists()
+            user = request.user if request.user.is_authenticated else None
+            visitor_id = visitor_id_for(request)
+            if user or visitor_id:
+                data["liked_by_me"] = has_liked(user, visitor_id, instance)
         data["content_json"] = resolve_media(instance.content_json)  # image nodes get src/width/height, as in admin
         return data

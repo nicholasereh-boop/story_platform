@@ -54,7 +54,7 @@ class AdminCommentDetailView(APIView):
     permission_classes = [IsStaffUser]
     http_method_names = ["patch", "options"]
 
-    def patch(self, request, pk):
+    def patch(self, request, pk, **kwargs):
         comment = get_object_or_404(Comment, pk=pk)
         serializer = AdminStatusSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -84,7 +84,7 @@ class AdminDismissReportsView(APIView):
     permission_classes = [IsStaffUser]
     http_method_names = ["post", "options"]
 
-    def post(self, request, pk):
+    def post(self, request, pk, **kwargs):
         comment = get_object_or_404(Comment, pk=pk)
         with transaction.atomic():
             removed, _ = CommentReport.objects.filter(comment=comment).delete()
@@ -98,10 +98,10 @@ class AdminCommentSettingsView(APIView):
     permission_classes = [IsStaffUser]
     http_method_names = ["get", "patch", "options"]
 
-    def get(self, request):
+    def get(self, request, **kwargs):
         return Response({"comment_moderation": services.get_moderation_mode()})
 
-    def patch(self, request):
+    def patch(self, request, **kwargs):
         serializer = CommentSettingsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         previous = services.get_moderation_mode()

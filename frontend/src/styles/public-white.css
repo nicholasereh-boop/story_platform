@@ -1,0 +1,59 @@
+/* Home, All stories and the story page: pure white background, content starting at the very left of the screen,
+   and a flowing box of other stories at the bottom. PublicLayout adds `page-white` to the shell on those pages only. */
+
+/* ---------- pure white, flush left ---------- */
+.public-shell.page-white { background: #fff; }
+.public-shell.page-white .container,
+.public-shell.page-white .site-header-inner,
+.public-shell.page-white .site-footer-inner {
+  width: 100%; max-width: none; margin-inline: 0;
+  padding-inline: clamp(0.75rem, 2vw, 1.5rem);
+}
+.public-shell.page-white .container { text-align: left; }
+.public-shell.page-white .container .story-page { margin: 0; padding: 1rem 0 0; max-width: 46rem; background: transparent; }
+/* The comment box sits on the left, right under the share buttons, in the same column as the story. */
+.public-shell.page-white .comments { max-width: 46rem; margin: 1.25rem 0 0; }
+.public-shell.page-white .story-page .prose { margin-inline: 0; }
+.public-shell.page-white .intro p { max-width: 46rem; }
+.public-shell.page-white .pager { justify-content: flex-start; }
+
+/* ---------- flowing box of other stories ---------- */
+.flow { margin-top: 2.5rem; padding: 1.1rem 0 1.25rem; border-top: 1px solid var(--line); }
+.flow-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.8rem; }
+.flow-head h2 { margin: 0; font-family: var(--font-read); font-size: 1.3rem; }
+.flow-toggle { border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 999px; padding: 0.25rem 0.85rem; font: 600 0.82rem var(--font-ui); cursor: pointer; }
+.flow-toggle:hover { background: var(--brand-soft); }
+
+.flow-viewport {
+  overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 0.9rem 0;
+  box-shadow: 0 1px 2px rgba(31, 36, 48, 0.06), 0 8px 22px rgba(31, 36, 48, 0.07);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 3%, #000 97%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 3%, #000 97%, transparent);
+}
+.flow-track { display: flex; width: max-content; animation: flow-scroll var(--flow-seconds, 40s) linear infinite; }
+.flow-group { display: flex; gap: 1rem; padding: 0 0.5rem 0 0.5rem; margin: 0; list-style: none; }
+.flow.is-paused .flow-track,
+.flow-viewport:hover .flow-track,
+.flow-viewport:focus-within .flow-track { animation-play-state: paused; }
+
+.flow-card { flex: 0 0 auto; width: 15rem; }
+.flow-card a { display: block; color: inherit; text-decoration: none; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #fff; height: 100%; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+.flow-card a:hover, .flow-card a:focus-visible { transform: translateY(-3px); box-shadow: var(--shadow); border-color: #d9b4ad; }
+.flow-thumb { display: block; aspect-ratio: 16 / 9; background: linear-gradient(135deg, var(--brand-soft), #e8e6df); overflow: hidden; }
+.flow-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.flow-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0.55rem 0.7rem 0.15rem; font: 700 0.98rem/1.3 var(--font-read); overflow-wrap: anywhere; }
+.flow-meta { display: block; margin: 0 0.7rem 0.7rem; color: var(--muted); font-size: 0.8rem; }
+
+@keyframes flow-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+@media (max-width: 30rem) {
+  .flow-card { width: 12.5rem; }
+  .flow-head h2 { font-size: 1.15rem; }
+}
+
+/* Less motion: no auto-scrolling. The row can be scrolled by hand instead. */
+@media (prefers-reduced-motion: reduce) {
+  .flow-track { animation: none; }
+  .flow-viewport { overflow-x: auto; -webkit-mask-image: none; mask-image: none; }
+  .flow-group[aria-hidden="true"], .flow-toggle { display: none; }
+}

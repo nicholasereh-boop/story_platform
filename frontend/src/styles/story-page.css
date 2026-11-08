@@ -1,0 +1,173 @@
+/* One story (/stories/<name>): black background, a livelier reading page, and the "Discover more" feed underneath.
+   PublicLayout puts `page-story` on the shell for this page only, so no other page changes. The site's colours are CSS
+   variables, so redefining them here also darkens the header, footer, comments and buttons on this page. */
+
+.public-shell.page-story {
+  --bg: #050507; --surface: #15151a; --ink: #ecebf1; --muted: #a9a8b5; --line: #2b2b33;
+  --brand: #ff9f8a; --brand-ink: #1a1214; --brand-soft: #2c2026; --focus: #8bb8ff;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.6), 0 10px 28px rgba(0, 0, 0, 0.5);
+  color: var(--ink);
+  background:
+    radial-gradient(46rem 26rem at 105% 6%, rgba(255, 159, 138, 0.13), transparent 62%),
+    radial-gradient(46rem 26rem at -8% 38%, rgba(122, 162, 255, 0.12), transparent 62%),
+    #050507;
+}
+.public-shell.page-story ::selection { background: #ff9f8a; color: #1a1214; }
+
+/* flush left, like the other left-aligned pages */
+.public-shell.page-story .container,
+.public-shell.page-story .site-header-inner,
+.public-shell.page-story .site-footer-inner { width: 100%; max-width: none; margin-inline: 0; padding-inline: clamp(0.75rem, 2vw, 1.5rem); }
+.public-shell.page-story .container { text-align: left; }
+
+/* things the base stylesheet colours in light tones */
+.public-shell.page-story input[type="text"], .public-shell.page-story input[type="email"], .public-shell.page-story input[type="password"],
+.public-shell.page-story input[type="search"], .public-shell.page-story input:not([type]), .public-shell.page-story select, .public-shell.page-story textarea {
+  background: #1e1e25; color: var(--ink); border-color: #4a4a55;
+}
+.public-shell.page-story input::placeholder, .public-shell.page-story textarea::placeholder { color: #8d8c99; }
+.public-shell.page-story .suggest, .public-shell.page-story .rev-list button { background: var(--surface); color: var(--ink); }
+.public-shell.page-story .btn.ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
+.public-shell.page-story a.chip:hover { background: #3a2a31; }
+.public-shell.page-story .skeleton { background: linear-gradient(90deg, #1b1b21 25%, #26262d 37%, #1b1b21 63%); background-size: 400% 100%; }
+
+/* ---------- reading progress and back-to-top ---------- */
+.sp-progress { position: fixed; z-index: 60; top: 0; left: 0; right: 0; height: 4px; pointer-events: none; }
+.sp-progress > span { display: block; width: 100%; height: 100%; transform-origin: left; transform: scaleX(var(--p, 0)); background: linear-gradient(90deg, #ff9f8a, #ffb86b, #7aa2ff); box-shadow: 0 0 10px rgba(255, 159, 138, 0.7); }
+.sp-top {
+  position: fixed; z-index: 40; right: 1rem; bottom: 1rem; width: 2.9rem; height: 2.9rem; border: 0; border-radius: 50%; cursor: pointer;
+  background: linear-gradient(135deg, #ff9f8a, #ffb86b); color: #1a1214; font-size: 1.4rem; font-weight: 800; line-height: 1;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55); opacity: 0; transform: translateY(14px) scale(0.9); pointer-events: none; visibility: hidden;
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0s linear 0.25s;
+}
+.sp-top.is-visible { opacity: 1; transform: none; pointer-events: auto; visibility: visible; transition: opacity 0.25s ease, transform 0.25s ease, visibility 0s; }
+.sp-top:hover { transform: translateY(-3px) scale(1.06); }
+
+/* ---------- the story itself ---------- */
+.public-shell.page-story .container .story-page {
+  margin: 0; padding: 1.2rem 0 0; max-width: 46rem; background: transparent; animation: sp-rise 0.6s ease both;
+}
+.public-shell.page-story .story-page .kicker a {
+  display: inline-block; padding: 0.15rem 0.75rem; border-radius: 999px; background: rgba(255, 159, 138, 0.14); color: var(--brand); border: 1px solid rgba(255, 159, 138, 0.35);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.public-shell.page-story .story-page .kicker a:hover { background: rgba(255, 159, 138, 0.28); transform: translateY(-1px); text-decoration: none; }
+.public-shell.page-story .story-title {
+  font-size: clamp(2rem, 5.2vw, 3.3rem); line-height: 1.08; letter-spacing: -0.01em; margin: 0.6rem 0 0.7rem;
+  color: #fff; background: linear-gradient(95deg, #ffffff 10%, #ffd9b8 55%, #ff9f8a 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.public-shell.page-story .byline {
+  display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.5rem; padding: 0.3rem 0.9rem; margin-bottom: 1.2rem;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 999px; font-size: 0.86rem; color: var(--muted);
+}
+.public-shell.page-story .lede { color: #d6d4df; font-size: 1.25rem; padding-left: 1rem; border-left: 4px solid var(--brand); }
+.public-shell.page-story .story-cover { margin: 1.2rem 0 1.8rem; }
+.public-shell.page-story .story-cover img { border-radius: 18px; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 22px 60px rgba(255, 159, 138, 0.16); }
+
+.public-shell.page-story .story-page .prose { max-width: 65ch; margin-inline: 0; color: #e4e3ea; font-size: 1.15rem; line-height: 1.9; }
+.public-shell.page-story .prose > p:first-of-type::first-letter { float: left; font-size: 3.7em; line-height: 0.82; padding: 0.06em 0.12em 0 0; font-weight: 700; color: var(--brand); }
+.public-shell.page-story .prose h1, .public-shell.page-story .prose h2, .public-shell.page-story .prose h3 { color: #fff; }
+.public-shell.page-story .prose h2 { position: relative; padding-bottom: 0.4em; }
+.public-shell.page-story .prose h2::after { content: ""; position: absolute; left: 0; bottom: 0; width: 3.2rem; height: 4px; border-radius: 4px; background: linear-gradient(90deg, #ff9f8a, #7aa2ff); }
+.public-shell.page-story .prose a { color: var(--brand); text-decoration-thickness: 2px; text-underline-offset: 3px; border-radius: 3px; transition: background 0.2s ease; }
+.public-shell.page-story .prose a:hover { background: rgba(255, 159, 138, 0.18); }
+.public-shell.page-story .prose blockquote {
+  position: relative; margin: 1.6em 0; padding: 1.1rem 1.4rem 1.1rem 3.2rem; border: 0; border-left: 4px solid #ff9f8a; border-radius: 0 16px 16px 0;
+  background: rgba(255, 255, 255, 0.05); color: #f4eefc; font-size: 1.12em;
+}
+.public-shell.page-story .prose blockquote::before { content: "\201C"; position: absolute; left: 0.8rem; top: -0.1rem; font: 700 3.4rem/1 var(--font-read); color: #ff9f8a; opacity: 0.85; }
+.public-shell.page-story .prose hr { border: 0; height: 6px; background: radial-gradient(circle, #ff9f8a 0 3px, transparent 3.5px) center / 1.6rem 6px repeat-x; }
+.public-shell.page-story .prose code { background: #212129; color: #ffd3c8; padding: 0.1em 0.4em; border-radius: 6px; font-size: 0.92em; }
+.public-shell.page-story .prose pre { background: #101015; border: 1px solid var(--line); border-radius: 12px; padding: 1rem; overflow-x: auto; }
+.public-shell.page-story .prose pre code { background: none; padding: 0; color: #e4e3ea; }
+.public-shell.page-story .prose img { border-radius: 14px; }
+
+/* tags, like and share: rounder and livelier */
+.public-shell.page-story .story-page .chips .chip { font-weight: 600; }
+.public-shell.page-story .story-page .chips li:nth-child(5n + 1) .chip { background: rgba(255, 159, 138, 0.16); color: #ffb3a1; }
+.public-shell.page-story .story-page .chips li:nth-child(5n + 2) .chip { background: rgba(122, 162, 255, 0.16); color: #a9c1ff; }
+.public-shell.page-story .story-page .chips li:nth-child(5n + 3) .chip { background: rgba(110, 214, 160, 0.15); color: #8be0b4; }
+.public-shell.page-story .story-page .chips li:nth-child(5n + 4) .chip { background: rgba(255, 196, 107, 0.16); color: #ffcf8a; }
+.public-shell.page-story .story-page .chips li:nth-child(5n + 5) .chip { background: rgba(190, 150, 255, 0.16); color: #d0b4ff; }
+.public-shell.page-story .like-btn { border-radius: 999px; padding: 0.5rem 1.3rem; font-weight: 700; transition: transform 0.2s ease, background 0.2s ease; }
+.public-shell.page-story .like-btn:hover:not(:disabled) { transform: translateY(-2px) scale(1.04); }
+.public-shell.page-story .like-btn.liked { background: linear-gradient(135deg, #ff6b81, #ff9f8a); color: #1a1214; border-color: transparent; animation: sp-pop 0.45s ease; }
+.public-shell.page-story .share .btn { border-radius: 999px; transition: transform 0.2s ease; }
+.public-shell.page-story .share .btn:hover { transform: translateY(-2px); }
+
+/* comments */
+.public-shell.page-story .comments { max-width: 46rem; margin: 1.25rem 0 0; padding: 1rem 1.2rem; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.public-shell.page-story .comment { border-top-color: var(--line); }
+
+/* related stories and the flowing box, in dark colours */
+.public-shell.page-story .flow-viewport,
+.public-shell.page-story .flow-card a,
+.public-shell.page-story .flow-toggle { background: var(--surface); }
+.public-shell.page-story .flow-toggle { color: var(--ink); }
+.public-shell.page-story .flow-toggle:hover { background: #26262e; }
+.public-shell.page-story .flow-card a:hover, .public-shell.page-story .flow-card a:focus-visible { border-color: #6b6b75; }
+
+/* ---------- "Discover more": the endless feed, with wide list cards ---------- */
+.sf { margin-top: 2.2rem; padding: 1.4rem 0 2.5rem; border-top: 1px solid var(--line); }
+.sf-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.9rem; }
+.sf-head h2 { margin: 0; font: 800 1.7rem var(--font-read); background: linear-gradient(95deg, #fff, #ffb89f); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.sf-refresh { display: inline-flex; align-items: center; gap: 0.5rem; border: 0; border-radius: 999px; padding: 0.55rem 1.3rem; background: #1273d4; color: #fff; font: 600 0.92rem var(--font-ui); cursor: pointer; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); transition: background 0.2s ease, transform 0.15s ease; }
+.sf-refresh:hover { background: #0f62b3; transform: translateY(-1px); }
+.sf-spin { display: inline-block; font-size: 1.1rem; line-height: 1; }
+.sf-refresh.is-spinning .sf-spin { animation: sp-rotate 0.7s linear; }
+
+.sf-topics { list-style: none; margin: 0 0 1.1rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.sf-topics a { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.9rem; border-radius: 999px; background: #22222a; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 0.88rem; transition: background 0.2s ease, transform 0.2s ease; }
+.sf-topics a:hover, .sf-topics a:focus-visible { background: #34343e; transform: translateY(-2px); }
+.sf-topics span { min-width: 1.5rem; text-align: center; border-radius: 999px; background: rgba(255, 255, 255, 0.14); font-size: 0.75rem; padding: 0.03rem 0.4rem; }
+
+.sf-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sf-card { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; animation: sp-rise 0.45s ease both; }
+.sf-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: linear-gradient(180deg, #ff9f8a, #7aa2ff); opacity: 0; transition: opacity 0.2s ease; }
+.sf-card:hover, .sf-card:focus-within { transform: translateY(-3px); box-shadow: var(--shadow); border-color: #44444f; }
+.sf-card:hover::before, .sf-card:focus-within::before { opacity: 1; }
+.sf-card > a { display: grid; grid-template-columns: minmax(0, 38%) minmax(0, 1fr); gap: 1rem; padding: 0.75rem; height: 100%; color: inherit; text-decoration: none; }
+.sf-card > a:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+.sf-thumb { display: block; align-self: start; aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden; background: #26262e; }
+.sf-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
+.sf-card:hover .sf-thumb img { transform: scale(1.07); }
+.sf-noimg { display: grid; place-items: center; width: 100%; height: 100%; font: 800 2.2rem var(--font-ui); color: rgba(255, 255, 255, 0.75); background: linear-gradient(135deg, #4a2f55, #1f3a63); }
+.sf-text { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; padding: 0.15rem 0.2rem 0.15rem 0; }
+.sf-meta { display: flex; align-items: center; gap: 0.45rem; color: var(--muted); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.sf-dot { flex: 0 0 auto; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: linear-gradient(135deg, #ff9f8a, #ffb86b); }
+.sf-meta-code { color: #86d6a2; }
+.sf-title { font: 700 1.15rem/1.3 var(--font-read); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.sf-card:hover .sf-title { color: var(--brand); }
+.sf-excerpt { color: #c4c3cf; font-size: 0.9rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.sf-foot { margin-top: auto; color: var(--muted); font-size: 0.8rem; }
+.sf-price { color: #86d6a2; font-weight: 700; }
+.sf-product { border-color: #24412f; }
+
+.sf-sentinel { height: 1px; }
+.sf-more { display: flex; justify-content: center; padding: 1.2rem 0 0.4rem; }
+.sf-more-btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 0.55rem 1.4rem; font: 600 0.9rem var(--font-ui); cursor: pointer; }
+.sf-more-btn:hover { background: #26262e; }
+.sf-note { text-align: center; color: var(--muted); font-size: 0.9rem; margin: 1.1rem 0 0.2rem; }
+
+@keyframes sp-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes sp-pop { 0% { transform: scale(1); } 45% { transform: scale(1.18); } 100% { transform: scale(1); } }
+@keyframes sp-rotate { to { transform: rotate(360deg); } }
+
+/* ---------- smaller screens ---------- */
+@media (max-width: 62rem) {
+  .sf-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 30rem) {
+  .sf-card > a { grid-template-columns: minmax(0, 36%) minmax(0, 1fr); gap: 0.7rem; padding: 0.6rem; }
+  .sf-title { font-size: 1.02rem; -webkit-line-clamp: 4; }
+  .sf-excerpt { display: none; }
+  .sf-head h2 { font-size: 1.4rem; }
+  .public-shell.page-story .prose > p:first-of-type::first-letter { font-size: 3.2em; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-shell.page-story .container .story-page, .sf-card { animation: none; }
+  .sf-card, .sf-thumb img, .sp-top, .sf-refresh, .public-shell.page-story .like-btn { transition: none; }
+  .public-shell.page-story .like-btn.liked, .sf-refresh.is-spinning .sf-spin { animation: none; }
+  .sf-card:hover, .sf-card:focus-within { transform: none; }
+}

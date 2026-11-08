@@ -1,92 +1,63 @@
-import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { getCategories, getStories, getTags } from "../../api/public";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { getCategories, getStories } from "../../api/public";
+import { listProjects } from "../../api/marketplace";
+import HomeFeed, { FeedSkeleton } from "../../components/home/HomeFeed";
 import QueryState from "../../components/public/QueryState";
-import StoryGrid, { StoryGridSkeleton } from "../../components/public/StoryGrid";
+import StoryFlow from "../../components/public/StoryFlow";
 import { SITE_DESCRIPTION, SITE_NAME } from "../../config";
+import { FEATURES } from "../../features";
 import { usePublicMeta } from "../../hooks/usePublicMeta";
-import { fmtDate } from "../../utils/format";
+import "../../styles/home-feed.css";
 
-function Hero({ story }) {
-  return (
-    <section className="hero" aria-label="Featured story">
-      <Link to={`/stories/${story.slug}`} className="hero-media" tabIndex={-1} aria-hidden="true">
-        {story.cover?.url ? <img src={story.cover.url} alt="" width={story.cover.width || undefined} height={story.cover.height || undefined} fetchpriority="high" /> : <span className="card-placeholder" />}
-      </Link>
-      <div className="hero-body">
-        {story.categories?.[0] && <Link to={`/categories/${story.categories[0].slug}`} className="kicker">{story.categories[0].name}</Link>}
-        <h2><Link to={`/stories/${story.slug}`}>{story.title}</Link></h2>
-        {story.excerpt && <p className="lede">{story.excerpt}</p>}
-        <p className="card-meta">{[story.author, fmtDate(story.published_at), story.reading_minutes ? `${story.reading_minutes} min read` : null].filter(Boolean).join(" · ")}</p>
-      </div>
-    </section>
-  );
+// The home page is a dark, news-feed style page: one big card that changes from story to story, two cards beside it and a
+// second row of four. "Refresh stories" swaps in other stories, and every refresh also brings a few marketplace products.
+// Every loaded page together, newest first, without the same story twice.
+function poolOf(pages) {
+  const seen = new Set();
+  return pages.flatMap((p) => p.items).filter((s) => (seen.has(s.id) ? false : seen.add(s.id)));
 }
 
 export default function HomePage() {
   usePublicMeta({ home: true, description: SITE_DESCRIPTION, path: "/" });
 
-  const featured = useQuery({ queryKey: ["public", "stories", { featured: 1, page_size: 1 }], queryFn: () => getStories({ featured: 1, page_size: 1 }) });
-  const latest = useQuery({ queryKey: ["public", "stories", { page_size: 9 }], queryFn: () => getStories({ page_size: 9 }) });
+  // The stories come page by page as the reader scrolls (an endless feed); all pages together are the pool.
+  const stories = useInfiniteQuery({
+    queryKey: ["public", "stories", "feed"],
+    queryFn: ({ pageParam }) => getStories({ page_size: 36, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.pagination?.has_next ? last.pagination.page + 1 : undefined),
+  });
   const categories = useQuery({ queryKey: ["public", "categories"], queryFn: getCategories });
-  const tags = useQuery({ queryKey: ["public", "tags"], queryFn: getTags });
-
-  // The hero is the latest FEATURED story; with none featured, the newest story takes its place.
-  const heroStory = featured.data?.items?.[0] || latest.data?.items?.[0];
-  const gridStories = (latest.data?.items || []).filter((s) => s.id !== heroStory?.id).slice(0, 8);
-  const popularTags = [...(tags.data || [])].sort((a, b) => b.story_count - a.story_count || a.name.localeCompare(b.name)).slice(0, 12);
+  // Products are a bonus: if the marketplace is off or cannot answer, the home page simply shows no product box.
+  const products = useQuery({
+    queryKey: ["public", "home-products"],
+    queryFn: () => listProjects({ page_size: 24 }),
+    enabled: FEATURES.marketplace,
+    staleTime: 60 * 1000,
+    retry: false,
+  });
 
   return (
-    <div className="container">
-      <section className="intro">
-        <h1>{SITE_NAME}</h1>
-        <p className="muted">{SITE_DESCRIPTION}</p>
-      </section>
-
-      {/* Wait for BOTH queries so the hero does not flash the newest story and then swap to the featured one. */}
+    <>
+      <h1 className="sr-only">{SITE_NAME}</h1>
       <QueryState
-        query={{ ...latest, isLoading: latest.isLoading || featured.isLoading }}
-        skeleton={<StoryGridSkeleton count={6} />}
-        isEmpty={(d) => d.items.length === 0}
-        empty={<div className="empty">No stories have been published yet. Please check back soon.</div>}
+        query={stories}
+        skeleton={<FeedSkeleton />}
+        isEmpty={(d) => (d.pages[0]?.items.length || 0) === 0}
+        empty={<div className="hf"><div className="empty">No stories have been published yet. Please check back soon.</div></div>}
       >
-        {() => (
-          <>
-            {heroStory && <Hero story={heroStory} />}
-            {gridStories.length > 0 && (
-              <section aria-labelledby="latest-heading">
-                <div className="section-head">
-                  <h2 id="latest-heading">Latest stories</h2>
-                  <Link to="/stories">All stories →</Link>
-                </div>
-                <StoryGrid stories={gridStories} />
-              </section>
-            )}
-          </>
+        {(d) => (
+          <HomeFeed
+            stories={poolOf(d.pages)}
+            products={products.data?.items || []}
+            categories={categories.data || []}
+            hasMore={Boolean(stories.hasNextPage)}
+            loadingMore={stories.isFetchingNextPage}
+            onLoadMore={() => stories.fetchNextPage()}
+          />
         )}
       </QueryState>
-
-      {categories.data?.length > 0 && (
-        <section aria-labelledby="cats-heading">
-          <h2 id="cats-heading">Browse by category</h2>
-          <ul className="chips big">
-            {categories.data.map((c) => (
-              <li key={c.slug}><Link className="chip" to={`/categories/${c.slug}`}>{c.name} <span className="count">{c.story_count}</span></Link></li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {popularTags.length > 0 && (
-        <section aria-labelledby="tags-heading">
-          <h2 id="tags-heading">Popular tags</h2>
-          <ul className="chips">
-            {popularTags.map((t) => (
-              <li key={t.slug}><Link className="chip" to={`/tags/${t.slug}`}>#{t.name} <span className="count">{t.story_count}</span></Link></li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </div>
+      <div className="hf hf-after"><StoryFlow /></div>
+    </>
   );
 }

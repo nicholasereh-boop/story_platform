@@ -84,6 +84,7 @@ def test_story_content_never_creates_script_nodes_or_unsafe_links(staff_client, 
         assert href.lower().startswith(("http://", "https://", "mailto:")) and not any(c in href for c in "<>\"' \x00")
 
 
+@pytest.mark.django_db  # was missing: without it this test errored before it ever reached the comment code
 @pytest.mark.parametrize("payload", CORPUS, ids=IDS)
 def test_comments(payload):
     story = make_story()

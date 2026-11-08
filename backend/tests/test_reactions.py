@@ -85,14 +85,7 @@ def test_likes_endpoint_for_anonymous_and_reader(client, db):
     assert "private" in mine["Cache-Control"] and "Cookie" in mine["Vary"]
 
 
-def test_anonymous_cannot_like_or_unlike(client, db):
-    story = make_story()
-    for method in (client.post, client.delete):
-        response = method(like_url(story))
-        assert response.status_code in (401, 403)
-        body = response.json()
-        assert body["data"] is None and body["message"] and body["errors"]
-    assert Like.objects.count() == 0
+# Visitors CAN like and unlike (tests/test_anonymous_likes.py); they still cannot write comments (tests/test_comments.py).
 
 
 @pytest.mark.parametrize("status", ["draft", "scheduled", "archived"])

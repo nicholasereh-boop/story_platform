@@ -12,9 +12,19 @@ export function extractYoutubeId(value) {
   return match ? match[1] : null;
 }
 
-/** Privacy-friendly embed address (no cookies until the visitor presses play). */
-export const youtubeEmbedUrl = (videoId, { autoplay = false } = {}) => {
+/**
+ * Privacy-friendly embed address (no cookies until the visitor presses play).
+ * `jsApi` adds enablejsapi=1 (and this site's origin) so the one-video-at-a-time coordinator can watch the player.
+ */
+export const youtubeEmbedUrl = (videoId, { autoplay = false, jsApi = false } = {}) => {
   const base = `https://www.youtube-nocookie.com/embed/${videoId}`;
+  const params = [];
   // Browsers only allow autoplay when the video starts muted, so autoplay always comes with mute=1.
-  return autoplay ? `${base}?autoplay=1&mute=1&playsinline=1&rel=0` : base;
+  if (autoplay) params.push("autoplay=1", "mute=1", "playsinline=1", "rel=0");
+  if (jsApi) {
+    params.push("enablejsapi=1");
+    const origin = typeof window !== "undefined" ? window.location?.origin : "";
+    if (origin && origin !== "null") params.push(`origin=${encodeURIComponent(origin)}`);
+  }
+  return params.length ? `${base}?${params.join("&")}` : base;
 };

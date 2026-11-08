@@ -37,7 +37,7 @@ export default function StoriesPage() {
 
   return (
     <div className="container">
-      <h1>Stories</h1>
+      {/* <h1>Stories</h1>
       <form className="filters" onSubmit={(e) => e.preventDefault()} aria-label="Filter stories">
         <div className="field">
           <label htmlFor="f-category">Category</label>
@@ -54,7 +54,7 @@ export default function StoriesPage() {
           </select>
         </div>
         {filtered && <button type="button" className="btn ghost small" onClick={() => update({ category: "", tag: "", page: "" })}>Clear filters</button>}
-      </form>
+      </form> */}
 
       <QueryState
         query={stories}

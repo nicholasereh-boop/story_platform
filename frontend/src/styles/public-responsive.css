@@ -1,0 +1,50 @@
+/* Public site: the navigation becomes a slide-in SIDEBAR (from the left) on tablets and phones (1024px and narrower), and the home page
+   shows four story cards per row on big screens and one per row on smaller ones.
+   Loaded after styles.css on purpose, so it only overrides what it must. Above 1024px the header looks exactly as before. */
+
+/* ---------- navigation: desktop is unchanged; these two exist only for the sidebar ---------- */
+.site-header .menu-close, .site-header .menu-backdrop { display: none; } /* beats the generic .btn display rule */
+
+/* @media (max-width: 1024px) */
+
+@media (max-width: 700px) {
+  .site-header .menu-toggle { display: inline-flex; }
+  .site-header .menu-toggle { order: -1; margin-left: 0; } /* the Menu button sits at the left, before the site name */
+
+  /* The sidebar. Closed = off-screen AND visibility:hidden, so its links cannot be reached with the keyboard. */
+  .site-header .site-menu {
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 41;
+    width: min(20rem, 86vw); max-height: none; flex-basis: auto;
+    display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 1rem;
+    padding: 0.9rem 1.1rem 1.5rem; overflow-y: auto; overscroll-behavior: contain;
+    background: var(--surface); border-right: 1px solid var(--line); box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
+    transform: translateX(-105%); visibility: hidden;
+    transition: transform 0.25s ease, visibility 0s linear 0.25s;
+  }
+  .site-header .site-menu.open { transform: none; visibility: visible; transition: transform 0.25s ease, visibility 0s; max-height: none; }
+
+  .site-header .menu-close { display: inline-flex; align-self: flex-end; }
+  .site-header .menu-backdrop { display: block; position: fixed; inset: 0; z-index: 40; background: rgba(15, 18, 28, 0.5); }
+
+  .site-header .site-menu nav { flex-direction: column; flex-wrap: nowrap; gap: 0.15rem; }
+  .site-header .site-menu nav a { padding: 0.75rem 0.85rem; }
+  .site-header .search-bar input { width: 100%; flex: 1; }
+
+  /* Log in / Sign up stack neatly; the account menu opens inline instead of floating (a floating list would be clipped). */
+  .site-header .site-menu .auth-links { flex-direction: column; align-items: stretch; text-align: center; gap: 0.6rem; }
+  .site-header .site-menu .user-menu > .btn { width: 100%; justify-content: space-between; }
+  .site-header .site-menu .user-menu-list { position: static; min-width: 0; margin-top: 0.35rem; box-shadow: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header .site-menu, .site-header .site-menu.open { transition: none; }
+}
+
+/* ---------- home page: latest stories ---------- */
+.home-latest .story-grid { grid-template-columns: minmax(0, 1fr); } /* smaller screens: one card per row */
+
+@media (min-width: 1025px) {
+  .home-latest .story-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.25rem; } /* big screens: four per row */
+  .home-latest .card-title { font-size: 1.05rem; }
+  .home-latest .card-body { padding: 0.85rem 0.9rem 1rem; }
+}

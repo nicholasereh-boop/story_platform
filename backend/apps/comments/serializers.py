@@ -100,13 +100,27 @@ class _BodyMixin:
             raise
 
 
+class CommentBodyField(serializers.CharField):
+    """A text field that REMOVES NUL characters instead of refusing them.
+
+    Django REST framework's default text field answers 400 "Null characters are not allowed." for a NUL character, before
+    our own cleaning (text.clean_body, which strips every control character) ever runs. The documented rule is "control
+    characters are removed", so a comment pasted with a stray NUL is cleaned and accepted like any other.
+    """
+
+    def to_internal_value(self, data):
+        if isinstance(data, str):
+            data = data.replace("\x00", "")
+        return super().to_internal_value(data)
+
+
 class CommentCreateSerializer(_BodyMixin, serializers.Serializer):
-    body = serializers.CharField(trim_whitespace=False, allow_blank=True, error_messages={"required": "Please write something before posting."})
+    body = CommentBodyField(trim_whitespace=False, allow_blank=True, error_messages={"required": "Please write something before posting."})
     parent = serializers.IntegerField(required=False, allow_null=True)
 
 
 class CommentEditSerializer(_BodyMixin, serializers.Serializer):
-    body = serializers.CharField(trim_whitespace=False, allow_blank=True, error_messages={"required": "Please write something before posting."})
+    body = CommentBodyField(trim_whitespace=False, allow_blank=True, error_messages={"required": "Please write something before posting."})
 
     def __init__(self, *args, comment=None, **kwargs):
         super().__init__(*args, **kwargs)

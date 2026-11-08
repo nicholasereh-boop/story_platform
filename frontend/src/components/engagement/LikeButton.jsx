@@ -2,26 +2,24 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../auth/AuthContext";
 import { getLikes, likeStory, unlikeStory } from "../../api/engagement";
-import { useSignupPrompt } from "../../engagement/SignupPromptContext";
 import { engagementError } from "../../engagement/errors";
 
-// Like / unlike a story.
+// Like / unlike a story. Everyone can: logged-in readers and visitors alike (visitors cannot COMMENT, see CommentSection).
 //  - Optimistic: the heart and count change at once; if the server refuses, they roll back and a message appears.
 //  - Disabled while a request is in flight (no double clicks), aria-pressed shows the state, and the count sits in
 //    an aria-live region so screen readers hear it change.
-//  - Anonymous visitors cannot like: the click opens the signup prompt instead of failing.
+//  - The server remembers who liked: a logged-in reader by account, a visitor by a token kept in their browser session
+//    (the existing session cookie). So the button shows "Liked" again after a reload, and one person cannot like twice.
 export default function LikeButton({ slug, initialCount = 0 }) {
   const { user } = useAuth() || {};
-  const { request } = useSignupPrompt();
   const queryClient = useQueryClient();
-  const key = ["likes", slug];
+  // The answer depends on who is asking, so logging in or out looks the story up again.
+  const key = ["likes", slug, user ? user.id : "visitor"];
   const [error, setError] = useState("");
 
-  // Logged-in readers ask the server whether THEY liked it; for visitors the story's own count is enough.
   const query = useQuery({
     queryKey: key,
     queryFn: () => getLikes(slug),
-    enabled: Boolean(user),
     placeholderData: { count: initialCount, liked: false },
     staleTime: 30_000,
   });
@@ -43,13 +41,7 @@ export default function LikeButton({ slug, initialCount = 0 }) {
     onSuccess: (result) => queryClient.setQueryData(key, result), // the server's numbers win
   });
 
-  const onClick = () => {
-    if (!user) {
-      request("like");
-      return;
-    }
-    mutation.mutate(!state.liked);
-  };
+  const onClick = () => mutation.mutate(!state.liked);
 
   return (
     <div className="like-box">

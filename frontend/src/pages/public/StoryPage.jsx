@@ -7,6 +7,9 @@ import CommentSection from "../../components/engagement/CommentSection";
 import LikeButton from "../../components/engagement/LikeButton";
 import QueryState from "../../components/public/QueryState";
 import RelatedStories from "../../components/public/RelatedStories";
+import StoryFlow from "../../components/public/StoryFlow";
+import StoryExtras from "../../components/story/StoryExtras";
+import StoryMoreFeed from "../../components/story/StoryMoreFeed";
 import ShareButtons from "../../components/public/ShareButtons";
 import { SITE_NAME } from "../../config";
 import { useSignupPrompt } from "../../engagement/SignupPromptContext";
@@ -15,6 +18,7 @@ import { usePublicMeta } from "../../hooks/usePublicMeta";
 import { fmtDate } from "../../utils/format";
 import { articleJsonLd } from "../../utils/seo";
 import PublicNotFound from "./PublicNotFound";
+import "../../styles/story-page.css";
 
 function StorySkeleton() {
   return (
@@ -57,6 +61,7 @@ export default function StoryPage() {
 
   return (
     <div className="container">
+      <StoryExtras />
       <QueryState query={query} skeleton={<StorySkeleton />} notFound={<PublicNotFound what="story" />}>
         {(s) => (
           <article className="story-page">
@@ -92,6 +97,8 @@ export default function StoryPage() {
       </QueryState>
       {story && <CommentSection slug={story.slug} count={story.comment_count} />}
       {story && <RelatedStories slug={slug} />}
+      {story && <StoryFlow exclude={[story.id]} />}
+      {story && <StoryMoreFeed excludeId={story.id} />}
     </div>
   );
 }

@@ -75,7 +75,7 @@ const h1s = () => screen.getAllByRole("heading", { level: 1 });
 describe("public pages without a logged-in user", () => {
   it("home renders with header, footer, one h1, stories, and no Admin link", async () => {
     renderAt("/");
-    expect(await screen.findByRole("heading", { name: "Latest stories", level: 2 })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /Refresh stories/ })).toBeTruthy(); // the dark news-feed home page
     expect(h1s()).toHaveLength(1);
     expect(screen.getByRole("banner")).toBeTruthy();
     expect(screen.getByRole("main")).toBeTruthy();
@@ -162,17 +162,18 @@ describe("public pages without a logged-in user", () => {
     expect(await screen.findByText("3 likes")).toBeTruthy();
     expect(await screen.findByRole("heading", { name: /Comments/, level: 2 })).toBeTruthy();
     expect(await screen.findByText(/no comments yet/i)).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Log in to join the discussion" })).toBeTruthy();
-    expect(eng.getLikes).not.toHaveBeenCalled(); // visitors never ask who liked
+    expect(screen.getByRole("link", { name: "Log in to comment" })).toBeTruthy(); // visitors can read and like, but not comment
+    expect(screen.getByText(/Only logged-in readers can write comments/)).toBeTruthy();
+    expect(eng.getLikes).toHaveBeenCalled(); // visitors ask the server whether THIS browser already liked it
     expect(screen.queryByRole("dialog")).toBeNull(); // the prompt is never shown just because a page loaded
   });
 
-  it("a visitor who clicks Like gets the signup prompt, and nothing is sent", async () => {
+  it("a visitor who clicks Like simply likes the story: the request is sent and no signup prompt appears", async () => {
+    eng.likeStory.mockResolvedValue({ count: 4, liked: true });
     renderAt("/stories/story-1");
     fireEvent.click(await screen.findByRole("button", { name: /^like/i }));
-    expect(await screen.findByRole("dialog", { name: "Join the conversation" })).toBeTruthy();
-    expect(eng.likeStory).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    await waitFor(() => expect(eng.likeStory).toHaveBeenCalledWith("story-1"));
+    expect(await screen.findByText("4 likes")).toBeTruthy();
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 

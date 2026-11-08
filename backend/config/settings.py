@@ -125,3 +125,14 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+
+REST_FRAMEWORK = {
+    # Keep your existing REST_FRAMEWORK settings here.
+
+    "DEFAULT_THROTTLE_RATES": {
+        # Keep any existing throttle rates.
+        "like_anonymous": "30/hour",
+        "like_user": "60/hour",
+    },
+}

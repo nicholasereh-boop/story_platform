@@ -7,18 +7,24 @@ Writes use session cookie auth + the CSRF header (`X-CSRFToken`), exactly like t
 
 | Method and path | Who | Result |
 |---|---|---|
-| `POST /stories/{slug}/like/` | logged in | `200 {count, liked: true}`. Idempotent: liking twice leaves one like and returns the same answer |
-| `DELETE /stories/{slug}/like/` | logged in | `200 {count, liked: false}`. Idempotent: unliking when not liked is still 200 |
-| `GET /stories/{slug}/likes/` | anyone | `200 {count, liked}`. `liked` is always `false` for visitors |
+| `POST /stories/{slug}/like/` | **anyone** | `200 {count, liked: true}`. Idempotent: liking twice leaves one like and returns the same answer |
+| `DELETE /stories/{slug}/like/` | **anyone** | `200 {count, liked: false}`. Idempotent: unliking when not liked is still 200 |
+| `GET /stories/{slug}/likes/` | anyone | `200 {count, liked}`. `liked` says whether **this reader or this browser** already liked the story |
 
 - Only **public** stories (published and `published_at` in the past) can be liked. Anything else is `404`.
-- Anonymous `POST`/`DELETE` is refused with `403` in the standard error envelope.
+- **Visitors can like; only logged-in readers can comment.** A visitor's like belongs to a random token kept in their
+  **session** (the existing `sessionid` cookie, so no new cookie). The token is not derived from an IP address, name or e-mail.
+  Clearing cookies starts a new anonymous identity (the usual limit of anonymous likes), and visitor likes are rate-limited per IP.
+- CSRF is enforced for visitors too (the app fetches the token at start-up), so another website cannot like on a visitor's behalf.
+- One person, one like, even across logging in: a browser that liked as a visitor and then logs in keeps that like, and liking
+  again as the account hands it over instead of counting twice. Unliking after logging in also removes the visitor-made like.
 - The slug is used in the URL (the public identifier).
-- `Like` has a database `UNIQUE(user, story)`. Two simultaneous requests cannot both count: the loser hits the constraint
+- A `Like` belongs to **exactly one** of `user` or `visitor_id` (database check), with a partial `UNIQUE` for each
+  (`user, story` and `visitor_id, story`). Two simultaneous requests cannot both count: the loser hits the constraint
   and is treated as "already liked".
 - `Story.like_count` is changed with one atomic `UPDATE ... SET like_count = like_count +/- 1` in the same transaction as the
   like row (never read-modify-write), and never goes below zero.
-- Throttle scope `like`: 60 per minute per user.
+- Throttle scopes: `like` is 60 per minute per logged-in user; `like_anonymous` is 60 per hour per IP address for visitors.
 
 ## Comments (`apps/comments`)
 
@@ -38,7 +44,7 @@ Staff see the same public list as everybody; they moderate in `/admin/comments`.
 | Method and path | Rules |
 |---|---|
 | `GET /stories/{slug}/comments/` | Top-level comments oldest first, **20 per page** (`?page=`, the size cannot be changed), replies nested in `replies`. A logged-in reader also gets their own pending comments |
-| `POST /stories/{slug}/comments/` | Login **and verified email** required (`403 "Please verify your email address first."` otherwise). Body `{body, parent?}`. Throttle `comment`: 10 per hour per user. `201` with the comment |
+| `POST /stories/{slug}/comments/` | **Login required** (visitors get `403`); no e-mail verification is needed. Body `{body, parent?}`. Throttle `comment`: 10 per hour per user. `201` with the comment |
 | `PATCH /comments/{id}/` | Owner only, only within `COMMENT_EDIT_WINDOW_MINUTES` (default 15) of creation; sets `edited_at`. Same input rules as posting. Others get `403`, after the window `403` |
 | `DELETE /comments/{id}/` | Owner (soft delete, `200`, idempotent) or staff. Other readers get `403`; comments they cannot see are `404` |
 | `POST /comments/{id}/report/` | Logged in. Body `{reason}` (0 to 300 characters). First report `201`, a repeat by the same user is a harmless `200`. Throttle `report`: 20 per hour per user. Only approved comments can be reported (`404` otherwise) |
@@ -106,9 +112,10 @@ from or `/`. The `/admin` guard sends readers to `/`. No tokens or passwords are
 
 ## The signup prompt (anonymous visitors only)
 
-A small dialog (Google button, sign-up and log-in links, Close). It opens when a visitor clicks Like or Comment, after about
-60% of a story has been read, or on the 3rd page view of the session. Never on every load: once closed, `localStorage`
-remembers it for **14 days** (a click on Like or Comment may still open it). Never on `/login`, `/register`, the password
+A small dialog (Google button, sign-up and log-in links, Close). It opens after about
+60% of a story has been read, or on the 3rd page view of the session (liking a story does **not** open it, because visitors
+can like; the comment area explains in place that commenting needs an account). Never on every load: once closed, `localStorage`
+remembers it for **14 days**. Never on `/login`, `/register`, the password
 pages, `/verify-email` or `/admin`. All storage access is wrapped in `try/catch`. It stores only a quiet-until timestamp and a
 page-view counter; nothing is tracked.
 
@@ -118,7 +125,8 @@ page-view counter; nothing is tracked.
 |---|---|---|
 | `COMMENT_EDIT_WINDOW_MINUTES` | `15` | how long a reader may edit their own comment |
 | `COMMENT_BLOCKED_WORDS` | empty | comma-separated words the spam filter rejects, e.g. `viagra,casino` |
-| `THROTTLE_LIKE` | `60/min` | like / unlike, per user |
+| `THROTTLE_LIKE` | `60/min` | like / unlike, per logged-in user |
+| `THROTTLE_LIKE_ANONYMOUS` | `60/hour` | like / unlike by visitors, per IP address |
 | `THROTTLE_COMMENT` | `10/hour` | posting comments, per user |
 | `THROTTLE_REPORT` | `20/hour` | reporting comments, per user |
 

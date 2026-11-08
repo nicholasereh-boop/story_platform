@@ -1,0 +1,68 @@
+/* Academy staff pages (manage courses, edit a course and its lessons). Prefixed `ac-` like the rest of the Academy. */
+.ac-h1 { margin: 0 0 0.3rem; font-size: clamp(1.6rem, 3.4vw, 2.3rem); }
+.ac-muted { color: var(--ac-muted); margin: 0.2rem 0 0; }
+.ac-back { text-decoration: none; font-weight: 700; }
+.ac-page-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem; margin-bottom: 1.2rem; }
+.ac-filters { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 1.2rem; }
+.ac-filters label { display: grid; gap: 0.25rem; font-size: 0.8rem; font-weight: 700; color: var(--ac-muted); }
+.ac-shell input:not([type="checkbox"]):not([type="radio"]), .ac-shell select, .ac-shell textarea {
+  width: 100%; padding: 0.55rem 0.75rem; border-radius: 12px; border: 1px solid #36456b; background: #0d1426; color: var(--ac-ink); font: inherit;
+}
+.ac-shell textarea { resize: vertical; }
+.ac-shell input::placeholder, .ac-shell textarea::placeholder { color: #7480a0; }
+.ac-filters input, .ac-filters select { min-width: 11rem; }
+.ac-empty { padding: 1.4rem; border: 1px dashed var(--ac-line); border-radius: 16px; color: var(--ac-muted); }
+.ac-error { color: var(--ac-danger); margin: 0.3rem 0 0; font-size: 0.9rem; }
+.ac-ok { color: var(--ac-teal); font-weight: 700; margin: 0.3rem 0 0; }
+
+.ac-admin-list { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: 0.7rem; }
+.ac-admin-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem; padding: 1rem 1.2rem; border-radius: 16px; background: var(--ac-surface); border: 1px solid var(--ac-line); transition: border-color 0.2s ease, transform 0.2s ease; }
+.ac-admin-item:hover { border-color: var(--ac-violet); transform: translateY(-2px); }
+.ac-admin-main h2 { margin: 0; font-size: 1.15rem; }
+.ac-admin-main a { color: var(--ac-ink); text-decoration: none; }
+.ac-admin-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.ac-status { padding: 0.15rem 0.7rem; border-radius: 999px; font-size: 0.78rem; font-weight: 800; background: var(--ac-surface-2); color: var(--ac-muted); }
+.ac-status-published { background: rgba(61, 220, 151, 0.16); color: var(--ac-teal); }
+.ac-status-draft { background: rgba(255, 196, 107, 0.16); color: var(--ac-amber); }
+
+.ac-panel { margin: 0 0 1.2rem; padding: 1.2rem 1.3rem; border-radius: 20px; background: var(--ac-surface); border: 1px solid var(--ac-line); }
+.ac-panel h2 { margin: 0 0 0.6rem; font-size: 1.25rem; }
+.ac-panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.6rem; }
+.ac-panel-head h2 { margin: 0; }
+.ac-field { display: grid; gap: 0.3rem; margin-bottom: 0.9rem; }
+.ac-field label, .ac-label { font-weight: 700; font-size: 0.9rem; }
+.ac-field.has-error input, .ac-field.has-error select, .ac-field.has-error textarea { border-color: var(--ac-danger); }
+.ac-hint { margin: 0; color: var(--ac-muted); font-size: 0.82rem; }
+.ac-grid-2 { display: grid; gap: 0 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ac-checks { display: grid; gap: 0.5rem; margin: 0.4rem 0 0.8rem; }
+.ac-checks label { display: flex; gap: 0.5rem; align-items: flex-start; font-size: 0.92rem; }
+.ac-checks input { width: auto; margin-top: 0.25rem; }
+.ac-thumb-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem; }
+.ac-thumb { width: 7.5rem; height: 4.6rem; border-radius: 12px; object-fit: cover; background: var(--ac-surface-2); }
+.ac-thumb-empty { display: grid; place-items: center; font-size: 1.6rem; }
+.ac-problems { margin: 0.6rem 0; padding: 0.8rem 1rem; border-radius: 14px; background: rgba(255, 138, 138, 0.1); border: 1px solid rgba(255, 138, 138, 0.4); }
+.ac-problems ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+.ac-danger { color: var(--ac-danger) !important; }
+
+.ac-lessons { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; gap: 0.6rem; }
+.ac-lesson { border-radius: 14px; background: var(--ac-surface-2); border: 1px solid var(--ac-line); padding: 0.7rem 0.9rem; }
+.ac-lesson-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem; }
+.ac-lesson-n { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: var(--ac-grad); color: #07111f; font-weight: 800; }
+.ac-lesson-main { flex: 1 1 14rem; display: grid; gap: 0.3rem; min-width: 0; }
+.ac-lesson-main strong { overflow-wrap: anywhere; }
+.ac-badges { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.ac-badge { padding: 0.05rem 0.55rem; border-radius: 999px; font-size: 0.72rem; font-weight: 800; background: #243055; color: #c9d3f5; }
+.ac-badge-ok { background: rgba(61, 220, 151, 0.16); color: var(--ac-teal); }
+.ac-badge-warn { background: rgba(255, 196, 107, 0.16); color: var(--ac-amber); }
+.ac-lesson-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.ac-icon-btn { width: 2.1rem; height: 2.1rem; border-radius: 10px; border: 1px solid var(--ac-line); background: transparent; color: var(--ac-ink); cursor: pointer; }
+.ac-icon-btn:hover:not(:disabled) { background: var(--ac-surface); border-color: var(--ac-teal); }
+.ac-icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.ac-lesson-form { margin: 0.7rem 0 0.3rem; padding: 1rem; border-radius: 14px; background: var(--ac-bg); border: 1px solid var(--ac-line); }
+.ac-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.5rem; }
+
+@media (max-width: 40rem) {
+  .ac-grid-2 { grid-template-columns: minmax(0, 1fr); }
+  .ac-filters label, .ac-filters input, .ac-filters select { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .ac-admin-item { transition: none; } .ac-admin-item:hover { transform: none; } }

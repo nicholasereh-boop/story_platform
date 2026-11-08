@@ -175,7 +175,7 @@ Only strictly necessary cookies exist. Nothing else sets a cookie: not the analy
 
 | Name | Type | Purpose | Lifetime | Necessary |
 |---|---|---|---|---|
-| `sessionid` | cookie | keeps you logged in (`HttpOnly`, `SameSite=Lax`, `Secure` in production) | 14 days (staff: also ends after `STAFF_SESSION_IDLE_MINUTES` idle) | yes |
+| `sessionid` | cookie | keeps you logged in; for visitors without an account it only remembers which stories that browser liked (`HttpOnly`, `SameSite=Lax`, `Secure` in production) | 14 days (staff: also ends after `STAFF_SESSION_IDLE_MINUTES` idle) | yes |
 | `csrftoken` | cookie | protects forms and requests from other sites (readable by JavaScript on purpose) | about 1 year | yes |
 | `sb.visitor-id` | localStorage | random code for counting visitors; only a keyed hash reaches the server | until cleared | no |
 | `sb.session-id` | sessionStorage | groups pages of one visit | until the tab closes | no |

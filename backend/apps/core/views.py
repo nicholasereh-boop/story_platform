@@ -58,7 +58,7 @@ def cookie_table():
     return [
         {
             "name": settings.SESSION_COOKIE_NAME,
-            "purpose": "Keeps you logged in.",
+            "purpose": "Keeps you logged in. If you like a story without an account, it also remembers that, so you cannot like it twice.",
             "duration": f"{settings.SESSION_COOKIE_AGE // 86400} days (staff: ends after {settings.STAFF_SESSION_IDLE_MINUTES} minutes of inactivity)",
             "necessary": True,
         },

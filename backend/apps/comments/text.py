@@ -31,6 +31,15 @@ def clean_body(raw):
     return text.strip()
 
 
+MAX_NAME = 60
+
+
+def clean_name(raw):
+    """A visitor's display name: one line, no control characters, collapsed spaces, at most 60 characters."""
+    text = "".join(ch for ch in (raw or "") if unicodedata.category(ch) != "Cc" or ch in " ")
+    return re.sub(r"\s+", " ", text).strip()[:MAX_NAME]
+
+
 def count_links(text):
     return len(_LINK_RE.findall(text))
 
@@ -43,7 +52,7 @@ def blocked_word(text):
     return None
 
 
-def spam_problem(text, user, exclude_comment_id=None):
+def spam_problem(text, user, exclude_comment_id=None, session_key=None):
     """Spam filter v1. Returns a clear message if the text must be rejected, else None.
 
     Rules: more than 2 links, a blocked word, or the same text by the same user within the last hour.
@@ -54,7 +63,8 @@ def spam_problem(text, user, exclude_comment_id=None):
         return "Your comment contains a word that is not allowed here."
     from .models import Comment
 
-    duplicates = Comment.objects.filter(user=user, body=text, created_at__gte=timezone.now() - DUPLICATE_WINDOW)
+    author = {"user": user} if user is not None else {"user": None, "session_key": session_key}
+    duplicates = Comment.objects.filter(body=text, created_at__gte=timezone.now() - DUPLICATE_WINDOW, **author)
     if exclude_comment_id:
         duplicates = duplicates.exclude(pk=exclude_comment_id)
     if duplicates.exists():

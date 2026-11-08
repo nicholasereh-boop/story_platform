@@ -72,7 +72,7 @@ class StoryCommentsView(generics.ListAPIView):
         response = super().list(request, *args, **kwargs)
         return mark_per_user(response, request)
 
-    def post(self, request, slug):
+    def post(self, request, slug, **kwargs):
         story = get_public_story_or_404(slug)
         serializer = CommentCreateSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
@@ -116,7 +116,7 @@ class CommentDetailView(APIView):
     throttle_scope = "public_read"
     http_method_names = ["patch", "delete", "options"]
 
-    def patch(self, request, pk):
+    def patch(self, request, pk, **kwargs):
         comment = _get_comment_for(request, pk)
         if comment.user_id != request.user.id:
             raise _problem("detail", "You can only edit your own comments.", 403)
@@ -130,7 +130,7 @@ class CommentDetailView(APIView):
         services.edit_comment(comment, serializer.validated_data["body"])
         return Response(CommentSerializer(comment, context={"request": request}).data)
 
-    def delete(self, request, pk):
+    def delete(self, request, pk, **kwargs):
         comment = _get_comment_for(request, pk)
         if comment.user_id != request.user.id and not request.user.is_staff:
             raise _problem("detail", "You can only delete your own comments.", 403)
@@ -147,7 +147,7 @@ class CommentReportView(APIView):
     throttle_scope = "report"
     http_method_names = ["post", "options"]
 
-    def post(self, request, pk):
+    def post(self, request, pk, **kwargs):
         comment = Comment.objects.filter(public_story_filter("story"), pk=pk, status=S.APPROVED).first()
         if comment is None:
             raise Http404  # only visible (approved) comments can be reported

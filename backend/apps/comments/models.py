@@ -20,7 +20,10 @@ class Comment(models.Model):
         DELETED = "deleted", "Deleted"  # soft-deleted by its author or a moderator; shown as a placeholder if it has replies
 
     story = models.ForeignKey("stories.Story", on_delete=models.CASCADE, related_name="comments")
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="comments")
+    # The author is EITHER a logged-in user OR an anonymous visitor (identified by their session key).
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE, related_name="comments")
+    session_key = models.CharField(max_length=40, null=True, blank=True, db_index=True)
+    guest_name = models.CharField(max_length=60, blank=True, default="")  # optional display name a visitor typed
     body = models.TextField()  # PLAIN TEXT only; the frontend renders it as text, never as HTML
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.APPROVED)
     # Replies are one level deep: a reply's parent is always a top-level comment.
@@ -34,6 +37,11 @@ class Comment(models.Model):
         indexes = [
             models.Index(fields=["story", "status", "created_at"], name="comment_story_status_idx"),
             models.Index(fields=["status", "created_at"], name="comment_status_created_idx"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(user__isnull=False) | models.Q(session_key__isnull=False), name="comment_has_author"
+            ),
         ]
 
     def __str__(self):

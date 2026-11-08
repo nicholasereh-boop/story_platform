@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { adminListComments } from "../api";
 import { useAuth } from "../auth/AuthContext";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
+import { ADMIN_EXTENSION_LINKS } from "../features";
 
 // Every link is visible to staff; the server decides what each person may do (for example role changes are superuser-only).
 const LINKS = [
@@ -13,6 +14,7 @@ const LINKS = [
   { to: "/admin/analytics", label: "Analytics" },
   { to: "/admin/users", label: "Users" },
   { to: "/admin/audit-logs", label: "Audit log" },
+  ...ADMIN_EXTENSION_LINKS, // Marketplace review (when the feature is on)
 ];
 
 export default function AdminLayout() {

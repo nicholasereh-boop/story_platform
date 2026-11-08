@@ -237,7 +237,14 @@ def enforces_csrf(cls):
     return any(issubclass(a, SessionAuthentication) for a in cls.authentication_classes)
 
 
-CSRF_EXEMPT_ROUTES = {"analytics/collect/", "csp-report/"}  # both write only anonymous data
+CSRF_EXEMPT_ROUTES = {
+    "analytics/collect/", "csp-report/",  # both write only anonymous data
+    # Paystack's server-to-server callback. It cannot carry a CSRF token, so it does not use sessions at all: every call must
+    # pass the HMAC-SHA512 signature check and is re-verified with Paystack before anything changes (marketplace/views.py).
+    "marketplace/payments/webhook/",
+    # The Academy's Paystack callback: same reasoning and same protection (signature check, re-verification, idempotent; academy/views_paid.py).
+    "academy/payments/webhook/",
+}
 
 
 def test_the_only_csrf_exempt_views_are_the_two_anonymous_collectors():

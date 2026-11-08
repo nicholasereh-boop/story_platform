@@ -1,0 +1,65 @@
+/* News (extension roadmap). All classes start with nw-; colours come from the site's CSS variables so News matches the rest of the site. */
+.nw-page { max-width: 960px; margin: 0 auto; padding: 1.25rem 16px 3rem; }
+.nw-narrow { max-width: 640px; }
+.nw-h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 0.75rem; }
+.nw-h2 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem; }
+.nw-lede { color: var(--muted); }
+.nw-muted { color: var(--muted); font-size: 0.9rem; }
+.nw-meta { color: var(--muted); font-size: 0.85rem; margin: 0; }
+.nw-empty { padding: 1rem; background: var(--surface); border: 1px dashed var(--line); border-radius: var(--radius); color: var(--muted); }
+.nw-error { color: var(--danger); } .nw-ok { color: var(--ok); } .nw-warn { color: var(--warn); }
+.nw-nav { display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); margin-bottom: 1rem; padding-bottom: 0.5rem; }
+.nw-tabs { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.nw-tab { padding: 0.35rem 0.7rem; border-radius: 999px; text-decoration: none; color: var(--ink); }
+.nw-tab:hover { background: var(--brand-soft); } .nw-tab.is-active { background: var(--brand); color: var(--brand-ink); }
+.nw-search { display: flex; gap: 0.4rem; } .nw-search input { min-width: 0; }
+.nw-report { font-size: 0.85rem; }
+.nw-breaking-bar { display: flex; gap: 0.75rem; align-items: baseline; background: var(--brand-soft); border-left: 4px solid var(--brand); padding: 0.6rem 0.9rem; margin-bottom: 1rem; border-radius: var(--radius); }
+.nw-breaking-bar ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.nw-breaking { background: var(--danger); color: #fff; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 0.1rem 0.4rem; border-radius: 4px; margin-right: 0.4rem; }
+.nw-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.nw-lead { grid-template-columns: 1fr; margin-bottom: 1.5rem; }
+.nw-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
+.nw-card-lead { flex-direction: row; } .nw-card-lead .nw-card-img { height: 100%; width: 320px; max-width: 45vw; }
+.nw-card-img { width: 100%; height: 160px; object-fit: cover; display: block; }
+.nw-card-text { padding: 0.8rem 0.9rem; }
+.nw-card-title { font-size: 1.05rem; margin: 0.2rem 0 0.4rem; } .nw-card-title a { text-decoration: none; color: var(--ink); } .nw-card-title a:hover { text-decoration: underline; }
+.nw-card-sub { margin: 0 0 0.4rem; color: var(--muted); font-size: 0.92rem; }
+.nw-kicker { margin: 0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.nw-article { max-width: 720px; margin: 0 auto; }
+.nw-standfirst { font-size: 1.2rem; color: var(--muted); font-family: var(--font-read); }
+.nw-byline { color: var(--muted); font-size: 0.9rem; border-bottom: 1px solid var(--line); padding-bottom: 0.75rem; }
+.nw-body { font-family: var(--font-read); font-size: 1.08rem; line-height: 1.7; overflow-wrap: anywhere; }
+.nw-body blockquote { border-left: 3px solid var(--line); margin: 1rem 0; padding: 0.2rem 1rem; color: var(--muted); }
+.nw-body pre { overflow-x: auto; background: var(--surface); padding: 0.75rem; border-radius: var(--radius); }
+.nw-figure { margin: 1rem 0; } .nw-figure img { width: 100%; height: auto; border-radius: var(--radius); } .nw-figure figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 0.3rem; }
+.nw-video { position: relative; aspect-ratio: 16 / 9; } .nw-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: var(--radius); }
+.nw-attribution { margin-top: 2rem; padding: 0.9rem 1rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.nw-form { display: grid; gap: 0.75rem; } .nw-form label, .nw-inline { display: grid; gap: 0.25rem; font-weight: 600; font-size: 0.9rem; }
+.nw-form input, .nw-form select, .nw-form textarea { font: inherit; font-weight: 400; padding: 0.45rem 0.6rem; border: 1px solid var(--line); border-radius: 6px; width: 100%; }
+.nw-check { display: flex !important; align-items: center; gap: 0.5rem; font-weight: 400 !important; } .nw-check input { width: auto; }
+.nw-grid2 { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.nw-admin { max-width: 1000px; } .nw-admin-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.nw-admin-tabs { margin-bottom: 1rem; }
+.nw-status-tabs { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.75rem 0; }
+.nw-pill { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 0.25rem 0.8rem; cursor: pointer; font: inherit; } .nw-pill.is-active { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+.nw-table { width: 100%; border-collapse: collapse; background: var(--surface); } .nw-table th, .nw-table td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+.nw-status { font-size: 0.78rem; font-weight: 700; padding: 0.1rem 0.5rem; border-radius: 999px; background: var(--brand-soft); }
+.nw-status-published, .nw-status-approved, .nw-status-cleared, .nw-status-dismissed { background: #dcefe4; color: var(--ok); }
+.nw-status-quarantined, .nw-status-revoked, .nw-status-suspended, .nw-status-on_hold, .nw-status-upheld, .nw-status-rejected { background: #f7dcda; color: var(--danger); }
+.nw-tag { margin-left: 0.4rem; font-size: 0.72rem; padding: 0.05rem 0.4rem; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); }
+.nw-panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem; margin-top: 1.25rem; }
+.nw-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.6rem 0; }
+.nw-assets, .nw-sources, .nw-complaints, .nw-rights { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.75rem; }
+.nw-asset, .nw-complaint, .nw-rights li { border: 1px solid var(--line); border-radius: var(--radius); padding: 0.75rem; background: var(--bg); }
+.nw-source-head { width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.7rem 0.9rem; font: inherit; cursor: pointer; }
+.nw-quote { margin: 0.5rem 0; padding: 0.4rem 0.9rem; border-left: 3px solid var(--line); white-space: pre-wrap; overflow-wrap: anywhere; }
+.nw-history { padding-left: 1.2rem; }
+@media (max-width: 640px) { .nw-card-lead { flex-direction: column; } .nw-card-lead .nw-card-img { width: 100%; max-width: none; height: 180px; } .nw-table { display: block; overflow-x: auto; } }
+/* Phase 6: comments and the newsroom health strip */
+.nw-comments { max-width: 720px; margin: 2rem auto 0; }
+.nw-comment-list { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: 0.75rem; }
+.nw-comment { border: 1px solid var(--line); border-radius: var(--radius); padding: 0.7rem 0.9rem; background: var(--surface); }
+.nw-comment-body { margin: 0.3rem 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.nw-health { border: 1px solid var(--line); border-radius: var(--radius); padding: 0.6rem 0.9rem; margin-bottom: 1rem; background: var(--surface); }
+.nw-health p { margin: 0.2rem 0; } .nw-alerts { margin: 0.3rem 0 0; padding-left: 1.2rem; }

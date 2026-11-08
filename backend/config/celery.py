@@ -20,4 +20,10 @@ app.conf.beat_schedule = {
     "analytics-purge-old": {"task": "apps.analytics.tasks.purge_old", "schedule": crontab(hour=3, minute=30)},
     # Audit log retention (Phase 10): monthly, 04:15 UTC on the 1st.
     "audit-purge-old": {"task": "apps.audit.tasks.purge_old_entries", "schedule": crontab(day_of_month="1", hour=4, minute=15)},
+    # Video tools (extension roadmap): delete expired download files, fail stuck jobs, forget old job records.
+    "video-tools-cleanup": {"task": "apps.video_tools.tasks.cleanup_expired_downloads", "schedule": 10 * 60.0},
+        # News (extension roadmap): publish due articles, poll approved sources (does nothing unless NEWS_IMPORT_ENABLED), re-check rights daily.
+    "news-publish-scheduled": {"task": "apps.news.tasks.publish_scheduled", "schedule": 60.0},
+    "news-poll-sources": {"task": "apps.news.tasks.poll_due_sources", "schedule": 15 * 60.0},
+    "news-rights-maintenance": {"task": "apps.news.tasks.rights_maintenance", "schedule": crontab(hour=2, minute=20)},
 }

@@ -23,6 +23,8 @@ import SearchPage from "./pages/public/SearchPage";
 import StoriesPage from "./pages/public/StoriesPage";
 import StoryPage from "./pages/public/StoryPage";
 import { CategoriesPage, CategoryPage, TagPage, TagsPage } from "./pages/public/TermsPages";
+import { adminExtensionRoutes, publicExtensionRoutes } from "./extensionRoutes";
+import { academyRoutes } from "./academy/routes";
 
 // The root route wraps everything in AuthProvider (public pages use it for the header menu, likes and comments). A "data router" (createBrowserRouter) is used because the
 // story editor needs useBlocker() to warn about unsaved changes when leaving the page.
@@ -62,8 +64,11 @@ export const routes = [
           { path: "analytics", element: <AnalyticsPage /> },
           { path: "users", element: <UsersPage /> },
           { path: "audit-logs", element: <AuditLogsPage /> },
+          ...adminExtensionRoutes,
+          
         ],
       },
+          ...academyRoutes, 
       // The public website. Everything that is not /login or /admin lands here (unknown addresses get the public 404).
       {
         element: <PublicLayout />,
@@ -78,6 +83,7 @@ export const routes = [
           { path: "/search", element: <SearchPage /> },
           { path: "/privacy", element: <PrivacyPage /> },
           { path: "/account", element: <AccountPage /> },
+          ...publicExtensionRoutes, // marketplace + video tools (see extensionRoutes.jsx)
           { path: "*", element: <PublicNotFound /> },
         ],
       },

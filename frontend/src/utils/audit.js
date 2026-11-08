@@ -14,6 +14,8 @@ export const ACTION_FAMILIES = [
   { value: "user.*", label: "Users" },
   { value: "auth.*", label: "Staff logins" },
   { value: "mfa.*", label: "Two-step verification" },
+  { value: "marketplace.*", label: "Marketplace" },
+  { value: "news.*", label: "News" },
 ];
 
 const shorten = (text, max = 80) => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
