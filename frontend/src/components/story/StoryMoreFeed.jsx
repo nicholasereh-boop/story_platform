@@ -1,16 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { listProjects } from "../../api/marketplace";
 import { getCategories, getStories } from "../../api/public";
 import { SITE_NAME } from "../../config";
 import { FEATURES } from "../../features";
-import { MAX_STREAM, STREAM_STEP, buildStream, timeAgo } from "../../utils/homeFeed";
+import { buildStream, takeCircular, timeAgo } from "../../utils/homeFeed";
 import { formatPrice } from "../../utils/money";
 
-// "Discover more": the same endless feed as the home page (it keeps going as you scroll, has a Refresh button, and mixes in
-// marketplace products), but every story is a wide LIST card: picture on the left, text on the right.
-const HAS_OBSERVER = typeof IntersectionObserver !== "undefined";
+// "Discover more": one fixed page of up to 32 stories (it does not grow as you scroll), with a Refresh button for the next set
+// and marketplace products mixed in. Every story is a wide LIST card: picture on the left, text on the right.
+const PAGE_STORIES = 32;
 
 // Every loaded page together, newest first, without the same story twice (and without the one being read).
 function poolOf(pages, excludeId) {
@@ -80,10 +80,8 @@ export default function StoryMoreFeed({ excludeId }) {
   });
 
   const [batch, setBatch] = useState(0);
-  const [visible, setVisible] = useState(STREAM_STEP);
   const [spinning, setSpinning] = useState(false);
   const section = useRef(null);
-  const sentinel = useRef(null);
   const timer = useRef(null);
   useEffect(() => () => clearTimeout(timer.current), []);
 
@@ -91,15 +89,14 @@ export default function StoryMoreFeed({ excludeId }) {
   const hasMore = Boolean(stories.hasNextPage);
   const loadingMore = stories.isFetchingNextPage;
   const fetchNext = stories.fetchNextPage;
-  const start = batch * STREAM_STEP; // a refresh starts further along the list
-  const stream = buildStream(pool, { start, count: visible, exhausted: !hasMore, products: products.data?.items || [], productStart: batch * 3 });
-  const atCap = visible >= MAX_STREAM;
+  const count = Math.min(PAGE_STORIES, pool.length); // never more than 32 stories, and a small site never repeats a card
+  const start = batch * PAGE_STORIES; // a refresh starts further along the list
+  const extraProducts = takeCircular(products.data?.items || [], batch * 4, 4); // each product at most once on the page
+  const stream = buildStream(pool, { start, count, exhausted: !hasMore, products: extraProducts, repeatProducts: false });
   const topics = [...(categories.data || [])].sort((a, b) => b.story_count - a.story_count).slice(0, 6);
 
-  const grow = useCallback(() => setVisible((v) => Math.min(MAX_STREAM, v + STREAM_STEP)), []);
   const refresh = () => {
     setBatch((b) => b + 1);
-    setVisible(STREAM_STEP);
     setSpinning(true);
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setSpinning(false), 700);
@@ -107,16 +104,8 @@ export default function StoryMoreFeed({ excludeId }) {
   };
 
   useEffect(() => {
-    const el = sentinel.current;
-    if (!HAS_OBSERVER || !el || atCap || pool.length === 0) return undefined;
-    const io = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) grow(); }, { rootMargin: "900px 0px" });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [grow, atCap, visible, pool.length, hasMore]);
-
-  useEffect(() => {
-    if (hasMore && !loadingMore && start + visible > pool.length) fetchNext();
-  }, [hasMore, loadingMore, start, visible, pool.length, fetchNext]);
+    if (hasMore && !loadingMore && start + PAGE_STORIES > pool.length) fetchNext();
+  }, [hasMore, loadingMore, start, pool.length, fetchNext]);
 
   if (stories.isError || (stories.data && pool.length === 0)) return null; // a bonus section: hide it if there is nothing to show
   if (!stories.data) return null;
@@ -141,10 +130,8 @@ export default function StoryMoreFeed({ excludeId }) {
         {stream.map((e) => (e.type === "product" ? <ProductRow key={e.key} project={e.project} /> : <StoryRow key={e.key} story={e.story} />))}
       </ul>
 
-      {!atCap && HAS_OBSERVER && <div ref={sentinel} className="sf-sentinel" aria-hidden="true" />}
-      {!atCap && !HAS_OBSERVER && <div className="sf-more"><button type="button" className="sf-more-btn" onClick={grow}>Show more stories</button></div>}
       {loadingMore && <p className="sf-note" role="status">Loading more stories…</p>}
-      {atCap && <p className="sf-note">That is plenty for now. Press “Refresh stories” for a new set.</p>}
+      <div className="sf-more"><button type="button" className="sf-more-btn" onClick={refresh}>Show me a new set of stories</button></div>
     </section>
   );
 }

@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { SITE_NAME } from "../../config";
-import { MAX_STREAM, STORIES_PER_REFRESH, STREAM_STEP, buildBatch, buildStream, timeAgo } from "../../utils/homeFeed";
+import { STORIES_PER_REFRESH, STREAM_STORIES, buildBatch, buildStream, takeCircular, timeAgo } from "../../utils/homeFeed";
 import { formatPrice } from "../../utils/money";
 
 const HERO_MS = 6000; // the big card changes to the next story every 6 seconds
@@ -187,46 +187,34 @@ function ProductsBox({ products }) {
   );
 }
 
-// ---------- the whole feed ----------
-const HAS_OBSERVER = typeof IntersectionObserver !== "undefined";
-
+// ---------- the whole feed: one page of 32 cards, and a button for the next set ----------
 export default function HomeFeed({ stories, products = [], categories = [], hasMore = false, loadingMore = false, onLoadMore }) {
   const [batch, setBatch] = useState(0);
-  const [visible, setVisible] = useState(STREAM_STEP); // how many story cards the endless part shows
   const [spinning, setSpinning] = useState(false);
   const timer = useRef(null);
-  const sentinel = useRef(null);
   useEffect(() => () => clearTimeout(timer.current), []);
 
   const { hero, small, products: shownProducts } = buildBatch(stories, products, batch);
-  const start = batch * STORIES_PER_REFRESH + STORIES_PER_REFRESH; // the endless part continues right after those stories
-  const stream = buildStream(stories, { start, count: visible, exhausted: !hasMore, products, productStart: batch * 4 + 4 });
-  const atCap = visible >= MAX_STREAM;
+  const start = batch * STORIES_PER_REFRESH + STORIES_PER_REFRESH; // the cards under the first rows continue right after those stories
+  const used = hero.length + small.length; // stories already on the page in the big card and the cards beside it
+  const count = Math.max(0, Math.min(STREAM_STORIES, stories.length - used)); // only stories not shown yet: a small site never repeats a card
+  // Product cards among the stories are products the "Source code" box is not already showing, each at most once.
+  const boxIds = new Set(shownProducts.map((p) => p.id));
+  const extraProducts = takeCircular(products.filter((p) => !boxIds.has(p.id)), batch * 3, 3);
+  const stream = buildStream(stories, { start, count, exhausted: !hasMore, products: extraProducts, repeatProducts: false });
 
   const refresh = () => {
     setBatch((b) => b + 1);
-    setVisible(STREAM_STEP);
     setSpinning(true);
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setSpinning(false), 700);
     window.scrollTo?.({ top: 0, behavior: "smooth" });
   };
-  const grow = useCallback(() => setVisible((v) => Math.min(MAX_STREAM, v + STREAM_STEP)), []);
 
-  // Near the bottom: show more cards. The observer is set up again after every change, so if the sentinel is still in view
-  // (tall screen, or more stories just arrived) it asks again.
+  // Not enough stories loaded yet to fill the page while more exist on the server: fetch the next page.
   useEffect(() => {
-    const el = sentinel.current;
-    if (!HAS_OBSERVER || !el || atCap) return undefined;
-    const io = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) grow(); }, { rootMargin: "900px 0px" });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [grow, atCap, visible, stories.length, hasMore]);
-
-  // Running out of loaded stories while more exist on the server: fetch the next page.
-  useEffect(() => {
-    if (hasMore && !loadingMore && start + visible > stories.length) onLoadMore?.();
-  }, [hasMore, loadingMore, start, visible, stories.length, onLoadMore]);
+    if (hasMore && !loadingMore && start + STREAM_STORIES > stories.length) onLoadMore?.();
+  }, [hasMore, loadingMore, start, stories.length, onLoadMore]);
 
   const [a, b, c, d] = small;
   return (
@@ -248,10 +236,8 @@ export default function HomeFeed({ stories, products = [], categories = [], hasM
         {stream.map((e) => (e.type === "product" ? <ProductTile key={e.key} project={e.project} /> : <StoryTile key={e.key} story={e.story} />))}
       </ul>
 
-      {!atCap && HAS_OBSERVER && <div ref={sentinel} className="hf-sentinel" aria-hidden="true" />}
-      {!atCap && !HAS_OBSERVER && <div className="hf-more"><button type="button" className="hf-more-btn" onClick={grow}>Show more stories</button></div>}
       {loadingMore && <p className="hf-note" role="status">Loading more stories…</p>}
-      {atCap && <p className="hf-note">That is plenty for now. Press “Refresh stories” for a new set.</p>}
+      <div className="hf-more"><button type="button" className="hf-more-btn" onClick={refresh}>Show me a new set of stories</button></div>
     </div>
   );
 }

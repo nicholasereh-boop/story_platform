@@ -3,7 +3,6 @@ import { getCategories, getStories } from "../../api/public";
 import { listProjects } from "../../api/marketplace";
 import HomeFeed, { FeedSkeleton } from "../../components/home/HomeFeed";
 import QueryState from "../../components/public/QueryState";
-import StoryFlow from "../../components/public/StoryFlow";
 import { SITE_DESCRIPTION, SITE_NAME } from "../../config";
 import { FEATURES } from "../../features";
 import { usePublicMeta } from "../../hooks/usePublicMeta";
@@ -57,7 +56,7 @@ export default function HomePage() {
           />
         )}
       </QueryState>
-      <div className="hf hf-after"><StoryFlow /></div>
+      {/* The "More stories" strip is left out here: this page already shows a fixed set of cards, and the strip only repeats them. */}
     </>
   );
 }

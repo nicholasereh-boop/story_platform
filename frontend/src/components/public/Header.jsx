@@ -9,9 +9,9 @@ import "../../styles/public-responsive.css";
 const LINKS = [
   { to: "/", label: "Home", end: true },
   { to: "/stories", label: "Stories" },
-  { to: "/categories", label: "Categories" },
-  { to: "/tags", label: "Tags" },
-  ...EXTENSION_NAV_LINKS, // Marketplace, Video tools (each only when its feature is on)
+  // { to: "/categories", label: "Categories" },
+  // { to: "/tags", label: "Tags" },
+  // ...EXTENSION_NAV_LINKS, // Marketplace, Video tools (each only when its feature is on)
 ];
 
 // Same breakpoint as the CSS in styles/public-responsive.css: at this width and below the menu is a sidebar.
