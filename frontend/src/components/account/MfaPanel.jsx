@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { mfaConfirm, mfaDisable, mfaNewRecoveryCodes, mfaSetup, mfaStatus } from "../../api/security";
 import { useAuth } from "../../auth/AuthContext";
+import PasswordInput from "../auth/PasswordInput";
 import { copyText, downloadText } from "../../utils/download";
 
 const clean = (code) => code.replace(/\s+/g, "");
@@ -45,7 +46,7 @@ function SensitiveForm({ label, danger, mutation, onSuccess }) {
     <form onSubmit={submit} className="stack" noValidate>
       <div className="field">
         <label htmlFor={`mfa-pw-${label}`}>Password <span className="muted small">(if your account has one)</span></label>
-        <input id={`mfa-pw-${label}`} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <PasswordInput id={`mfa-pw-${label}`} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
         {fieldError?.password && <p className="field-error">{[].concat(fieldError.password).join(" ")}</p>}
       </div>
       <div className="field">

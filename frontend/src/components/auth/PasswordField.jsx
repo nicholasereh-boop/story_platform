@@ -1,6 +1,7 @@
 import { useId } from "react";
+import PasswordInput from "./PasswordInput";
 
-// Label + password input + (client or server) error, wired for screen readers.
+// Label + password input (with a show/hide button) + (client or server) error, wired for screen readers.
 export default function PasswordField({ label, value, onChange, error, autoComplete, hint, id }) {
   const auto = useId();
   const fieldId = id || auto;
@@ -8,9 +9,8 @@ export default function PasswordField({ label, value, onChange, error, autoCompl
   return (
     <div className="field">
       <label htmlFor={fieldId}>{label}</label>
-      <input
+      <PasswordInput
         id={fieldId}
-        type="password"
         autoComplete={autoComplete}
         value={value}
         onChange={(e) => onChange(e.target.value)}

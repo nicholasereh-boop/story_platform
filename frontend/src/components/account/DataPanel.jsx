@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { deleteMyAccount, exportMyData } from "../../api/security";
 import { useAuth } from "../../auth/AuthContext";
 import Modal from "../Modal";
+import PasswordInput from "../auth/PasswordInput";
 import { downloadText } from "../../utils/download";
 
 // "Download my data" and "Delete my account". Deleting ANONYMISES the account: it cannot be undone.
@@ -65,7 +66,7 @@ export default function DataPanel() {
             <div className="notice error" role="alert"><strong>This cannot be undone.</strong> You will be logged out and cannot sign in with this account again.</div>
             <div className="field">
               <label htmlFor="del-password">Your password</label>
-              <input id="del-password" type="password" autoComplete="current-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} data-autofocus />
+              <PasswordInput id="del-password" autoComplete="current-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} data-autofocus />
             </div>
             <div className="field">
               <label htmlFor="del-email">Or, if you only sign in with Google, type your email address</label>
